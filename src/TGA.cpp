@@ -9,6 +9,8 @@
 #include <functional>
 #include "TGA.hpp"
 
+namespace shmup {
+
 TGA::TGA() {}
 
 TGA::~TGA() {
@@ -76,3 +78,5 @@ bool TGA::createTexture(SDL_Renderer *renderer) {
     
     return true;
 }
+
+} // namespace shmup

@@ -7,34 +7,63 @@
 
 #pragma once
 
-#include <memory>
 #include <SDL.h>
+
+#include <memory>
+#include <mutex>
+
 #include "SDLRenderer.hpp"
 
+namespace shmup {
+
 class SDLProgram {
-public:
-    SDLProgram() = default;
+ public:
+  static SDLProgram* instance();
 
-    ~SDLProgram();
+  ~SDLProgram();
 
-    bool init(int width, int height);
+  bool init(int width, int height);
 
-    void quit();
+  void quit();
 
-    SDL_Window* window();
+  SDL_Window* window();
 
-    SDL_Renderer* nativeRenderer();
+  SDL_Renderer* nativeRenderer();
 
-    std::unique_ptr<SDLRenderer>& renderer();
+  std::unique_ptr<SDLRenderer>& renderer();
 
-    bool neededQuit() const;
+  bool neededQuit() const;
 
-    void handleEvent(SDL_Event* event);
+  void handleEvent(SDL_Event* event);
 
-private:
-    SDL_Window* m_window = nullptr;
+  inline unsigned width() const { return m_width; }
 
-    std::unique_ptr<SDLRenderer> m_renderer;
+  inline unsigned height() const { return m_height; }
 
-    bool m_neededQuit = false;
+  void updateTime();
+
+  inline double delta() const { return m_delta; }
+
+ private:
+  SDLProgram() = default;
+
+  static SDLProgram* s_instance;
+
+  SDL_Window* m_window = nullptr;
+
+  std::unique_ptr<SDLRenderer> m_renderer;
+
+  bool m_neededQuit = false;
+
+  unsigned m_width = 0;
+
+  unsigned m_height = 0;
+
+  uint64_t m_currentTime = 0;
+
+  uint64_t m_lastTime = 0;
+
+  double m_delta = 0;
 };
+
+}  // namespace shmup

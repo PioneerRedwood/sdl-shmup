@@ -11,6 +11,8 @@
 #include <SDL.h>
 #include "RGBA.hpp"
 
+namespace shmup {
+
 /**
  * TGA (Truevision Graphics Adapter), TARGA (Truevision Advanced Raster Graphics Adapter)
  * https://en.wikipedia.org/wiki/Truevision_TGA
@@ -78,3 +80,5 @@ private:
     
     SDL_Texture* m_texture = nullptr;
 };
+
+} // namespace shmup

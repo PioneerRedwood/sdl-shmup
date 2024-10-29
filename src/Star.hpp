@@ -1,25 +1,20 @@
 //------------------------------------------------------------------------------
-// File: RGBA.hpp
+// File: Star.hpp
 // Author: Chris Redwood
-// Created: 2024-10-21
+// Created: 2024-10-29
 // License: MIT License
 //------------------------------------------------------------------------------
 
 #pragma once
 
-#include <cstdint>
+#include <SDL.h>
 
 namespace shmup {
 
-struct RGBA {
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
-  uint8_t a;
+struct Star {
+  SDL_FRect rect;
+  bool visible;
+  float speed;
 };
 
-struct RGBAf {
-  float r, g, b, a;
-};
-
-}  // namespace shmup
+}

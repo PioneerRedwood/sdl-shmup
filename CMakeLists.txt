@@ -10,25 +10,19 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CXX_FLAGS "-Wall")
 
 # header files
-set(HEADER_FILES
-    src/RGBA.hpp
-    src/TGA.hpp
-    src/SDLRenderer.hpp
-    src/SDLProgram.hpp
+file(GLOB HEADER_FILES
+    ${CMAKE_SOURCE_DIR}/src/*.hpp
 )
 
 # source files
-set(SORUCES
-    src/TGA.cpp
-    src/SDLRenderer.cpp
-    src/SDLProgram.cpp
-    src/main.cpp
+file(GLOB SORUCES_FILES
+    ${CMAKE_SOURCE_DIR}/src/*.cpp
 )
 
 # Create exec file
-add_executable(sdl-shmup
+add_executable(${PROJECT_NAME}
     ${HEADER_FILES}
-    ${SORUCES}
+    ${SORUCES_FILES}
 )
 
 # Settings for platform
@@ -71,7 +65,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     )
 
     # Link the SDL2 libraries
-    target_link_libraries(sdl-shmup
+    target_link_libraries(${PROJECT_NAME}
         lib-sdl2
         lib-sdl2main
     )
@@ -137,7 +131,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         message(STATUS "Unknown CPU architecture: ${CMAKE_SYSTEM_PROCESSOR}")
     endif()
 
-    target_link_libraries(sdl-shmup
+    target_link_libraries(${PROJECT_NAME}
         lib-sdl2
         lib-sdl2main
         ${SDL2_LIBRARIES}
@@ -162,7 +156,7 @@ endif()
 # SDL2 DLL 복사
 if(WIN32)
     set(SDL2_DLL ${CMAKE_SOURCE_DIR}/lib/SDL2/Windows/lib/x86/SDL2.dll)
-    add_custom_command(TARGET sdl-shmup POST_BUILD
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${SDL2_DLL}" $<TARGET_FILE_DIR:sdl-shmup>)
+            "${SDL2_DLL}" $<TARGET_FILE_DIR:${PROJECT_NAME}>)
 endif()

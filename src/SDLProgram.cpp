@@ -70,14 +70,7 @@ void SDLProgram::handleEvent(SDL_Event* event) {
       break;
     }
     case SDL_KEYDOWN: {
-      SDL_Keycode code = event->key.keysym.sym;
-      if (code == SDLK_RIGHT) {
-        // TODO: 이 명령을 렌더러에 전달 - 렌더러에서 플레이어의 위치를 옮겨야
-        // 함. 설정된 속도에 따라 정해진 프레임마다 위치를 계산할수 있음
-        std::cout << "Move right \n";
-      } else if (code == SDLK_LEFT) {
-        std::cout << "Move left \n";
-      }
+      m_keyEventCallback(event);
       break;
     }
     default: {
@@ -91,6 +84,10 @@ void SDLProgram::updateTime() {
   m_currentTime = SDL_GetPerformanceCounter();
   m_delta = (double)((m_currentTime - m_lastTime) * 1000 /
                      (double)SDL_GetPerformanceFrequency());
+}
+
+void SDLProgram::bindKeyEvent(std::function<void(SDL_Event*)>&& callback) {
+    m_keyEventCallback = std::move(callback);
 }
 
 }  // namespace shmup

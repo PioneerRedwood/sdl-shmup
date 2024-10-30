@@ -14,12 +14,7 @@
 #include "SDLProgram.hpp"
 #include "StarManager.hpp"
 #include "TGA.hpp"
-
-#if _WIN32
-constexpr auto s_planeFilepath = "../resources/plane.tga";
-#else
-constexpr auto s_planeFilepath = "../../resources/plane.tga";
-#endif
+#include "Player.hpp"
 
 int main(int argc, char** argv) {
   using namespace shmup;
@@ -32,26 +27,44 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  StarManager StarManager;
-  StarManager.spawnStars(140);
-
-  // 리소스 로드
-  std::unique_ptr<TGA> plane = std::make_unique<TGA>();
-  if (plane->readFromFile(s_planeFilepath) == false) {
-    std::cout << "File read failed " << s_planeFilepath << std::endl;
-    return 1;
-  }
   auto& renderer = program->renderer();
   auto* nativeRenderer = program->nativeRenderer();
+
+  StarManager starManager;
+  starManager.spawnStars(140);
+
+  Player player;
+  if(player.loadResource(nativeRenderer) == false) {
+    program->quit();
+    return 1;
+  }
+  player.updatePosition(
+    (int)program->width() / 2 - (player.plane()->header()->width / 2), 
+    program->height() - (150.0f + player.plane()->header()->height));
+  program->bindKeyEvent([&player, &program](SDL_Event* event) {
+    if(event->type == SDL_KEYDOWN) {
+        SDL_Keycode code = event->key.keysym.sym;
+        if (code == SDLK_RIGHT) {
+          std::cout << "Move right \n";
+          player.move(program->delta());
+        } else if (code == SDLK_LEFT) {
+          std::cout << "Move left \n";
+          player.move((-1) * program->delta());
+        }
+    }
+  });
 
   program->updateTime();
   // Main loop
   while (program->neededQuit() == false) {
-    program->updateTime();
-    {  // Check collision
+    {  
+        // Check collision
+        // TODO: 모든 GameObject를 상속받는 인스턴스끼리 비교
     }
 
-    {  // Update delta
+    {  
+        // Update delta
+        program->updateTime();
     }
 
     {  // Handle input events
@@ -62,7 +75,7 @@ int main(int argc, char** argv) {
     }
 
     {  // Update spawnable stuff (Change states)
-      StarManager.updatePositions(program->delta());
+      starManager.updatePositions(program->delta());
     }
 
     {  // Rendering
@@ -72,11 +85,11 @@ int main(int argc, char** argv) {
 
       // Draw stars
       renderer->enableBlending(SDL_BLENDMODE_BLEND);
-      renderer->drawStars(StarManager.tga(), StarManager.stars());
+      renderer->drawStars(starManager.tga(), starManager.stars());
 
       // Draw Plane
       renderer->enableBlending(SDL_BLENDMODE_BLEND);
-      renderer->drawTGA(plane, 0, 0);
+      renderer->drawTGA(player.plane(), player.position().x, player.position().y);
       renderer->flush();
 
       // Render
@@ -88,3 +101,4 @@ int main(int argc, char** argv) {
 
   return 0;
 }
+

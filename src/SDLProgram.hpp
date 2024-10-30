@@ -44,7 +44,9 @@ class SDLProgram {
 
   inline double delta() const { return m_delta; }
 
- private:
+  void bindKeyEvent(std::function<void(SDL_Event*)>&& callback);
+
+private:
   SDLProgram() = default;
 
   static SDLProgram* s_instance;
@@ -64,6 +66,8 @@ class SDLProgram {
   uint64_t m_lastTime = 0;
 
   double m_delta = 0;
+
+  std::function<void(SDL_Event*)> m_keyEventCallback;
 };
 
 }  // namespace shmup

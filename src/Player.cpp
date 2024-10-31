@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 // File: Player.cpp
 // Author: Chris Redwood
@@ -23,11 +24,7 @@ Player::Player() : GameObject() {
     m_tag = GameObjectTagPlayer;
 }
 
-Player::~Player() {
-    if(m_collider != nullptr) {
-        delete m_collider;
-    }
-}
+Player::~Player() {}
 
 bool Player::hasCollider() const {
     return (m_collider != nullptr);
@@ -47,7 +44,7 @@ bool Player::loadResource(SDL_Renderer* renderer) {
     }
 
     // init collider
-    m_collider = new CircleCollider();
+    m_collider = std::make_unique<CircleCollider>();
     // 이 충돌체의 좌표는 상대적으로 계산해야 하는데 ..
     m_collider->pos = { 0.0f, 0.0f };
     m_collider->radius = (float)m_planeTexture->header()->width / 2;
@@ -59,20 +56,20 @@ bool Player::loadResource(SDL_Renderer* renderer) {
 
 void Player::updatePosition(int x, int y) {
     // 현재 좌표 수정
-    m_pos = { (float)x, (float)y };
+    m_position = { (float)x, (float)y };
 
     // 충돌체 있으면 충돌체 좌표도 수정
     SDL_assert(m_collider != nullptr);
     
     // 약간 위쪽으로 위치
-    m_collider->pos = { m_pos.x, m_pos.y + 5.0f };
+    m_collider->pos = { m_position.x, m_position.y + 5.0f };
 }
 
 void Player::move(double delta) {
   // 이 값은 변경될 수 있음
   // 이동을 부드럽게 하려면 어떻게 해야 하지?
   const float speed = 1.33f;
-  updatePosition(m_pos.x + delta * speed, m_pos.y);
+  updatePosition(m_position.x + delta * speed, m_position.y);
 }
 
 }

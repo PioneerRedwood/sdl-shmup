@@ -34,13 +34,18 @@ bool SDLProgram::init(int width, int height) {
   }
 
   m_window = SDL_CreateWindow("SDL-Examples", 400, 0, width, height,
-                              SDL_WINDOW_RESIZABLE);
+                              SDL_WINDOW_SHOWN);
   if (m_window == nullptr) {
+    std::cout << "SDL_CreateWindow failed error: " << SDL_GetError() << std::endl;
     SDL_assert(false);
     return false;
   }
 
-  m_renderer = std::make_unique<SDLRenderer>(m_window);
+  m_renderer = std::make_unique<SDLRenderer>();
+  if(m_renderer->init(m_window) == false) {
+    SDL_assert(false);
+    return false;
+  }
 
   return true;
 }

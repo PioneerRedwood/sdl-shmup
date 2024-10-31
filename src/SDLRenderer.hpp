@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 // File: SDLRenderer.hpp
 // Author: Chris Redwood
@@ -12,19 +13,25 @@
 #include <list>
 #include <memory>
 
+#include "Player.hpp"
 #include "RGBA.hpp"
-#include "Star.hpp"
+#include "StarManager.hpp"
 #include "TGA.hpp"
 
 namespace shmup {
 
 class SDLRenderer {
  public:
-  SDLRenderer() = delete;
-
-  SDLRenderer(SDL_Window* window);
-
+  SDLRenderer();
   ~SDLRenderer();
+
+  SDLRenderer(const SDLRenderer&) = delete;
+  SDLRenderer& operator=(const SDLRenderer&) = delete;
+
+  SDLRenderer(SDLRenderer&&) = delete;
+  SDLRenderer& operator=(SDLRenderer&&) = delete;
+
+  bool init(SDL_Window* window);
 
   SDL_Renderer* native();
 
@@ -34,10 +41,9 @@ class SDLRenderer {
 
   void drawStars(std::unique_ptr<TGA>& tga, const std::list<Star>& stars);
 
-  void enableBlending(SDL_BlendMode blendMode);
+  void drawPlayer(std::unique_ptr<Player>& player);
 
-  void drawTexture(std::unique_ptr<TGA>& tga, int x, int y,
-                   SDL_BlendMode blendMode);
+  void enableBlending(SDL_BlendMode blendMode);
 
   void disableBlending();
 

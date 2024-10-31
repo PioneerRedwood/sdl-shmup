@@ -14,18 +14,20 @@
 
 namespace shmup {
 
-SDLRenderer::SDLRenderer(SDL_Window* window) {
-  // TODO: 과연 생성자에 결과를 확인해야 할수도 있는 인스턴스를 초기화하는 것이
-  // 좋을까?
-  m_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  if (m_renderer == nullptr) {
-    SDL_assert(false);
-  }
-}
+SDLRenderer::SDLRenderer() {}
 
 SDLRenderer::~SDLRenderer() { SDL_DestroyRenderer(m_renderer); }
 
 SDL_Renderer* SDLRenderer::native() { return m_renderer; }
+
+bool SDLRenderer::init(SDL_Window* window) {
+  m_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  if (m_renderer == nullptr) {
+    std::cout << "SDL_CreateRenderer failed error: " << SDL_GetError() << std::endl;
+    return false;
+  }
+  return true;
+}
 
 void SDLRenderer::clear() { SDL_RenderClear(m_renderer); }
 
@@ -95,20 +97,9 @@ void SDLRenderer::drawTGA(std::unique_ptr<TGA>& tga, int x, int y) {
   delete[] pixels;
 }
 
-void SDLRenderer::drawStars(std::unique_ptr<TGA>& tga,
-                            const std::list<Star>& stars) {
-  SDL_Texture* tex = const_cast<SDL_Texture*>(tga->sdlTexture());
-  SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-  for (auto& star : stars) {
-    if (star.visible) {
-      SDL_RenderCopyF(m_renderer, tex, nullptr, &star.rect);
-    }
-  }
-  SDL_RenderFlush(m_renderer);
-}
-
 void SDLRenderer::present() { SDL_RenderPresent(m_renderer); }
 
 void SDLRenderer::flush() { SDL_RenderFlush(m_renderer); }
 
 }  // namespace shmup
+

@@ -5,6 +5,8 @@
 // License: MIT License
 //------------------------------------------------------------------------------
 
+#pragma once
+
 #include <SDL.h>
 #include <memory>
 #include "TGA.hpp"

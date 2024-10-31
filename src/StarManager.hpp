@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 // File: StarManager.hpp
 // Author: Chris Redwood
@@ -11,9 +12,13 @@
 #include <RGBA.hpp>
 #include <list>
 #include "TGA.hpp"
-#include "Star.hpp"
+#include "GameObject.hpp"
 
 namespace shmup {
+
+struct Star : public GameObject {
+  float speed;
+};
 
 class StarManager {
 public:
@@ -21,9 +26,13 @@ public:
 
   ~StarManager();
 
+  bool init(SDL_Renderer* renderer, int width, int height);
+
   void spawnStars(unsigned count);
 
   void updatePositions(float delta);
+
+  void setStarPropertiesRandomly(Star& star);
 
   inline std::unique_ptr<TGA>& tga() {
     return m_tga;
@@ -40,3 +49,4 @@ private:
 };
 
 }
+

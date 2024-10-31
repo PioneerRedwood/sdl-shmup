@@ -1,6 +1,7 @@
-# Simple Shoot'em Up powered by SDL
+# Simple 2D Shoot'em Up
 
-[shmup](https://en.wikipedia.org/wiki/Shoot_%27em_up)
+## What's shmup?
+- [shmup](https://en.wikipedia.org/wiki/Shoot_%27em_up)
 
 ## 구현
 - 레이어화 (배경 및 배경에 뿌려지는 별, 플레이어 비행체, 총알, 적)

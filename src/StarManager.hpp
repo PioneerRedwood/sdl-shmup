@@ -30,22 +30,29 @@ public:
 
   void spawnStars(unsigned count);
 
-  void updatePositions(float delta);
-
-  void setStarPropertiesRandomly(Star& star);
+  void updateState(float delta);
 
   inline std::unique_ptr<TGA>& tga() {
     return m_tga;
   }
 
-  inline const std::list<Star>& stars() {
+  inline const Star* stars() {
     return m_stars;
   }
 
-private:
-  std::list<Star> m_stars;
+  inline unsigned starCount() const {
+    return m_starCount;
+  }
 
+private:
+  void setStarRandomPos(Star* star);
+
+private:
   std::unique_ptr<TGA> m_tga;
+
+  Star* m_stars = nullptr;
+
+  unsigned m_starCount = 0;
 };
 
 }

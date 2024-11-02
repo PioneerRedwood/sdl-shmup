@@ -8,40 +8,77 @@
 #pragma once
 
 #include <SDL.h>
+
+#include <list>
 #include <memory>
-#include "TGA.hpp"
+
 #include "GameObject.hpp"
+#include "TGA.hpp"
 
 namespace shmup {
 
-class Player : public GameObject {
-public:
-    Player();
-
-    ~Player();
-
-    bool loadResource(SDL_Renderer* renderer);
-
-    void updatePosition(int x, int y);
-    
-    void move(double delta);
-
-    bool hasCollider() const override;
-
-    inline std::unique_ptr<TGA>& plane() {
-      return m_planeTexture;
-    }
-
-    inline std::unique_ptr<TGA>& bullet() {
-      return m_bulletTexture;
-    }
-
-private:
-    std::unique_ptr<TGA> m_planeTexture;
-
-    std::unique_ptr<TGA> m_bulletTexture;
-
-    unsigned m_hp;
+enum BulletState {
+  BulletStateIdle,
+  BulletStateFired,
+  BulletStateHit,
+  BulletStateDestroyed
 };
 
-}
+struct Bullet : public GameObject {
+  BulletState state;
+  bool hasFlaggedCollided;
+  float speed;
+  void onCollided(const GameObject& target) override;
+};
+
+class Player : public GameObject {
+ public:
+  Player();
+
+  ~Player();
+
+  bool loadResource(SDL_Renderer* renderer);
+
+  void updatePosition(float x, float y);
+
+  void updateState(double delta);
+
+  void move(int direction);
+
+  inline std::unique_ptr<TGA>& planeTexture() { return m_planeTexture; }
+
+  inline std::unique_ptr<TGA>& bulletTexture() { return m_bulletTexture; }
+
+  void spawnBulets(unsigned count);
+
+  void updateBulletPosition(double delta);
+
+  inline const Bullet* bullets() { return m_bullets; }
+
+  inline unsigned bulletCount() const { return m_bulletCount; }
+
+  const std::vector<SDL_FPoint>& debugColliderPoints() {
+    return m_debugColliderPoints;
+  }
+
+  void onCollided(const GameObject& target) override;
+
+ private:
+  std::unique_ptr<TGA> m_planeTexture;
+
+  std::unique_ptr<TGA> m_bulletTexture;
+
+  unsigned m_hp;
+
+  float m_queuedMovePositionX = 0.0f;
+
+  Bullet* m_bullets;
+
+  unsigned m_bulletCount;
+
+  double m_elapsedFireTime;
+
+  std::vector<SDL_FPoint> m_debugColliderPoints;
+};
+
+}  // namespace shmup

@@ -39,10 +39,6 @@ class SDLRenderer {
 
   void drawTGA(std::unique_ptr<TGA>& tga, int x, int y);
 
-  void drawStars(std::unique_ptr<TGA>& tga, const std::list<Star>& stars);
-
-  void drawPlayer(std::unique_ptr<Player>& player);
-
   void enableBlending(SDL_BlendMode blendMode);
 
   void disableBlending();

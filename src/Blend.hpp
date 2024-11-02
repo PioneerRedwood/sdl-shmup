@@ -14,7 +14,8 @@
 namespace shmup::blend {
 
 RGBAf convertToFloat(const RGBA& c) {
-  return RGBAf{
+  // MSVC 사용 시 아래와 같이 구조체 초기화하는 기법은 C++20 이상부터 지원
+  return RGBAf {
       .r = (float)c.r / 255.0f,
       .g = (float)c.g / 255.0f,
       .b = (float)c.b / 255.0f,

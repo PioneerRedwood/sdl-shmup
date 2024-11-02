@@ -19,11 +19,11 @@ struct CircleCollider {
   float radius;
 };
 
-enum GameObjectTag : uint16_t {
+enum GameObjectTag : int {
   GameObjectTagNone = 0x0000,
-  GameObjectTagPlayer = 0x001,
-  GameObjectTagEnemy = 0x010,
-  GameObjectTagBullet = 0x001,
+  GameObjectTagPlayer = 0x0001,
+  GameObjectTagEnemy = 0x0010,
+  GameObjectTagBullet = 0x0100,
 };
 
 class GameObject {
@@ -38,6 +38,8 @@ class GameObject {
 
   GameObject(GameObject&& rhs);
   GameObject& operator=(GameObject&& rhs);
+  
+  virtual void setCollider(float x, float y, float radius);
 
   virtual bool hasCollider() const;
 
@@ -55,8 +57,7 @@ class GameObject {
 
   inline void visible(bool value) { m_visible = value; }
 
-  /// @brief 어떤 태그끼리 충돌 검사를 수행해야 하는지에 대해 초기화
-  // static void initCollisionInfo();
+  virtual void onCollided(const GameObject& target);
 
   /// @brief 계산을 통해 두 오브젝트가 충돌했는지 확인
   static bool isCollided(const GameObject& a, const GameObject& b);

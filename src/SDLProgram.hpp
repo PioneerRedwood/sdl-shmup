@@ -22,17 +22,23 @@ class SDLProgram {
 
   ~SDLProgram();
 
-  bool init(int width, int height);
+  bool init(int x, int y, int width, int height);
 
   void quit();
 
-  SDL_Window* window();
+  inline SDL_Window* window() {
+    return m_window;
+  }
 
   SDL_Renderer* nativeRenderer();
 
-  std::unique_ptr<SDLRenderer>& renderer();
+  inline std::unique_ptr<SDLRenderer>& renderer() {
+    return m_renderer;
+  }
 
-  bool neededQuit() const;
+  inline bool neededQuit() const {
+    return m_neededQuit;
+  }
 
   void handleEvent(SDL_Event* event);
 

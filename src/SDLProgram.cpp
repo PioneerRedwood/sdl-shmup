@@ -22,7 +22,7 @@ SDLProgram* SDLProgram::instance() {
 
 SDLProgram::~SDLProgram() { quit(); }
 
-bool SDLProgram::init(int width, int height) {
+bool SDLProgram::init(int x, int y, int width, int height) {
   m_width = width;
   m_height = height;
 
@@ -33,7 +33,7 @@ bool SDLProgram::init(int width, int height) {
     return false;
   }
 
-  m_window = SDL_CreateWindow("SDL-Examples", 400, 0, width, height,
+  m_window = SDL_CreateWindow("SDL-Examples", x, y, width, height,
                               SDL_WINDOW_SHOWN);
   if (m_window == nullptr) {
     std::cout << "SDL_CreateWindow failed error: " << SDL_GetError() << std::endl;
@@ -60,13 +60,7 @@ void SDLProgram::quit() {
   SDL_Quit();
 }
 
-SDL_Window* SDLProgram::window() { return m_window; }
-
 SDL_Renderer* SDLProgram::nativeRenderer() { return m_renderer->native(); }
-
-std::unique_ptr<SDLRenderer>& SDLProgram::renderer() { return m_renderer; }
-
-bool SDLProgram::neededQuit() const { return m_neededQuit; }
 
 void SDLProgram::handleEvent(SDL_Event* event) {
   switch (event->type) {

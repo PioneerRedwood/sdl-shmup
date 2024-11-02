@@ -49,6 +49,13 @@
     "algorithm": "cpp",
     "__tree": "cpp",
     "list": "cpp",
-    "map": "cpp"
+    "map": "cpp",
+    "memory": "cpp",
+    "concepts": "cpp",
+    "__debug": "cpp",
+    "atomic": "cpp",
+    "exception": "cpp",
+    "charconv": "cpp",
+    "span": "cpp"
   }
 }

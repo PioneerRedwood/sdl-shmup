@@ -16,7 +16,8 @@ float Math::distance(const SDL_FPoint& a, const SDL_FPoint& b) {
     );
 }
 
-void Math::createCirclePointVector(std::vector<SDL_FPoint>& points, float x, float y, float radius, int steps) {
+void Math::createCirclePoints(std::vector<SDL_FPoint>& points, float x, float y, float radius, int steps) {
+    points.clear();
     points.reserve(steps);
 
     float angle = 0.0f;

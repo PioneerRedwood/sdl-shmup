@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 
 #include "EnemyManager.hpp"
+
 #include "Math.hpp"
 namespace shmup {
 
@@ -18,19 +19,39 @@ constexpr auto s_enemyFilepath = "../../resources/enemy.tga";
 unsigned s_enemyMaxXPos = 0;
 unsigned s_enemyMaxYPos = 0;
 float s_enemySpeed = 30.0f;
+unsigned s_enemyDebugCircleColliderSteps = 180;
+float s_enemyCircleColliderRadius = 3.0f;
 
 void Enemy::onCollided(const GameObject& target) {
-  switch(target.tag()) {
+  switch (target.tag()) {
     case GameObjectTagPlayer: {
+      // TODO: 사라지고 플레이어에게 데미지
       break;
     }
     case GameObjectTagBullet: {
+      // TODO: 데미지 받음
+      visible(false);
+      state = EnemyStateHit;
       break;
     }
     default: {
       break;
     }
   }
+}
+
+void Enemy::updateCollidePosition(SDL_FPoint pos) {
+  if(m_collider.get() != nullptr &&
+    m_collider->position.x == pos.x && m_collider->position.y == pos.y) {
+    return;
+  }
+
+  setCollider(pos.x, pos.y, s_enemyCircleColliderRadius);
+
+  // 충돌체 원형 좌표 수정
+  Math::createCirclePoints(debugColliderPoints, pos.x, pos.y, 
+                                s_enemyCircleColliderRadius,
+                                s_enemyDebugCircleColliderSteps);
 }
 
 EnemyManager::EnemyManager() {}
@@ -41,21 +62,21 @@ EnemyManager::~EnemyManager() {
 }
 
 bool EnemyManager::init(SDL_Renderer* renderer, int width, int height) {
-  // TODO: Load texture
   m_texture = std::make_unique<TGA>();
-  if(m_texture->readFromFile(s_enemyFilepath) == false) {
+  if (m_texture->readFromFile(s_enemyFilepath) == false) {
     SDL_assert(false);
     return false;
   }
 
-  // TODO: Create texture
-  if(m_texture->createTexture(renderer) == false) {
+  if (m_texture->createTexture(renderer) == false) {
     SDL_assert(false);
     return false;
   }
+
+  s_enemyCircleColliderRadius = m_texture->header()->width / 2;
 
   s_enemyMaxXPos = width - m_texture->header()->width;
-  s_enemyMaxYPos = height - m_texture->header()->height;
+  s_enemyMaxYPos = height - m_texture->header()->height * 2; // 밑에 완전히 사라질 정도
 
   return true;
 }
@@ -63,23 +84,22 @@ bool EnemyManager::init(SDL_Renderer* renderer, int width, int height) {
 void EnemyManager::setEnemyRandomPos(Enemy* enemy) {
   SDL_assert(m_texture.get() != nullptr);
 
-  SDL_FPoint value = {
-    (float)m_texture->header()->width, (float)m_texture->header()->height
-  };
+  SDL_FPoint value = {(float)m_texture->header()->width,
+                      (float)m_texture->header()->height};
   enemy->size(value);
 
-  value = {
-    (float)(rand() / ((RAND_MAX + 1u) / s_enemyMaxXPos)),  // 0 ~ s_enemyMaxXPos
-    0.0f
-  };
+  value = {(float)(rand() /
+                   ((RAND_MAX + 1u) / s_enemyMaxXPos)),  // 0 ~ s_enemyMaxXPos
+           0.0f};
   enemy->position(value);
   
-  // TODO: 디버그 포인트 위치 업데이트
-  for(unsigned i = 0; i < enemy->debugColliderPoints.size(); ++i) {
-    enemy->debugColliderPoints[i].y = value.y;
-  }
-
   enemy->speed = (float)(10.0f + rand() / ((RAND_MAX + 1u) / 25));
+
+  // 충돌체 위치 업데이트
+  SDL_FPoint colliderPos = {
+      enemy->position().x + ((float)m_texture->header()->width / 2),
+      enemy->position().y + ((float)m_texture->header()->height / 2)};
+  enemy->updateCollidePosition(colliderPos);
 }
 
 void EnemyManager::spawnEnemies(unsigned count) {
@@ -89,39 +109,71 @@ void EnemyManager::spawnEnemies(unsigned count) {
 
   SDL_assert(m_enemies != nullptr);
 
-  for(unsigned i = 0; i < count; ++i) {
-    Enemy* enemy = &m_enemies[i];
-    setEnemyRandomPos(enemy);
-    Math::createCirclePointVector(enemy->debugColliderPoints, enemy->position().x, enemy->position().y, (float)m_texture->header()->width, 18);
-    enemy->setCollider(enemy->position().x, enemy->position().y, 2);
+  for (unsigned i = 0; i < count; ++i) {
+    Enemy& enemy = m_enemies[i];
+    enemy.tag(GameObjectTagEnemy);
+    setEnemyRandomPos(&enemy);
   }
 }
 
 void EnemyManager::updateState(double delta) {
-  // TODO: Update positions of enemies
   SDL_assert(m_enemies != nullptr);
 
+#if 1
   float deltaSeconds = delta / 1000.0f;
   for (unsigned i = 0; i < m_enemyCount; ++i) {
-    Enemy& enemy = m_enemies[i];
-    float yPos = enemy.position().y + enemy.speed * deltaSeconds;
+    Enemy* enemy = &m_enemies[i];
+    // 보이는 것만 업데이트
+    if(enemy->visible()) {
+      // 만약 현재 위치가 최대 Y 좌표를 벗어난 경우 보이지 않도록 수정
+      if(enemy->position().y >= s_enemyMaxYPos) {
+        // 보이지 않도록 한 뒤, 스폰 장소로 이동
+        enemy->visible(false);
+        enemy->state = EnemyStateIdle;
+        setEnemyRandomPos(enemy);
+      } else {
+        // 이동 좌표
+        float yPos = enemy->position().y + enemy->speed * deltaSeconds;
 
-    if (yPos >= s_enemyMaxYPos) {
-      enemy.visible(false);
-      setEnemyRandomPos(&enemy);
-      enemy.setCollider(enemy.position().x, enemy.position().y, 2);
+        enemy->state = EnemyStateMove;
+
+        // 위치 업데이트 
+        enemy->position({ enemy->position().x, yPos });
+
+        // 충돌체 위치 업데이트
+        SDL_FPoint colliderPos = {
+          enemy->position().x + ((float)m_texture->header()->width / 2),
+          enemy->position().y + ((float)m_texture->header()->height / 2)};
+        enemy->setCollider(colliderPos.x, colliderPos.y,
+                           s_enemyCircleColliderRadius);
+
+        // TODO: Debug collider points 위치 업데이트
+        // 이 위치 이동은 Math::createCirclePoints 보다 빠를 것
+        for (unsigned i = 0; i < enemy->debugColliderPoints.size(); ++i) {
+          enemy->debugColliderPoints[i].y += enemy->speed * deltaSeconds;
+        }
+      }
     } else {
-      enemy.visible(true);
-      enemy.position({enemy.position().x, yPos});
-      enemy.setCollider(enemy.position().x, enemy.position().y, 2);
-    }
-
-    // TODO: debug collider points 위치 업데이트
-    for(unsigned i = 0; i < enemy.debugColliderPoints.size(); ++i) {
-      enemy.debugColliderPoints[i].y += enemy.speed * deltaSeconds;
+      // 보이지 않는 것들은?
+      // 처음 위치로 이동하고 일정 시간이 지나면 스폰
+      // if(enemy->state == EnemyStateHit) {
+      //   // 맞았으니 잠시 이동 멈추기
+      // } else {
+      // }
+      setEnemyRandomPos(enemy);
+      enemy->visible(true);
+      enemy->state = EnemyStateIdle;
     }
   }
+#else
+  // 디버그용
+  Enemy* e = &m_enemies[0];
+  e->position({176, 333});
+  SDL_FPoint colliderPos = {
+    e->position().x + ((float)m_texture->header()->width / 2),
+    e->position().y + ((float)m_texture->header()->height / 2)};
+  e->updateCollidePosition(colliderPos);
+#endif
 }
 
-
-}
+}  // namespace shmup

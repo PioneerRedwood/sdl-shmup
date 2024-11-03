@@ -8,6 +8,7 @@
 #include "GameObject.hpp"
 
 #include <cmath>
+#include <iostream>
 
 #include "Math.hpp"
 
@@ -24,7 +25,7 @@ GameObject::GameObject(const GameObject& rhs) {
   m_visible = rhs.m_visible;
   if(rhs.m_collider.get() != nullptr) {
     m_collider = std::make_unique<CircleCollider>();
-    m_collider->pos = rhs.m_collider->pos;
+    m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
   }
 }
@@ -36,7 +37,7 @@ GameObject& GameObject::operator=(const GameObject& rhs) {
   m_visible = rhs.m_visible;
   if(rhs.m_collider.get() != nullptr) {
     m_collider = std::make_unique<CircleCollider>();
-    m_collider->pos = rhs.m_collider->pos;
+    m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
   }
   return *this;
@@ -49,7 +50,7 @@ GameObject::GameObject(GameObject&& rhs) {
   m_visible = rhs.m_visible;
   if(rhs.m_collider.get() != nullptr) {
     m_collider = std::make_unique<CircleCollider>();
-    m_collider->pos = rhs.m_collider->pos;
+    m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
   }
   rhs.m_collider.release();
@@ -62,7 +63,7 @@ GameObject& GameObject::operator=(GameObject&& rhs) {
   m_visible = rhs.m_visible;
   if(rhs.m_collider.get() != nullptr) {
     m_collider = std::make_unique<CircleCollider>();
-    m_collider->pos = rhs.m_collider->pos;
+    m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
     rhs.m_collider.release();
   }
@@ -74,7 +75,7 @@ void GameObject::setCollider(float x, float y, float radius) {
     m_collider = std::make_unique<CircleCollider>();
   }
 
-  m_collider->pos = { x, y };
+  m_collider->position = { x, y };
   m_collider->radius = radius;
 }
 
@@ -91,17 +92,31 @@ bool GameObject::isCollided(const GameObject& a, const GameObject& b) {
     }
 
     // 지정한 태그가 아니라면 충돌 검사를 하지 않음
-    // TODO: 충돌 검사 태그 수정 바람
-    int aTag = static_cast<int>(a.m_tag), bTag = static_cast<int>(b.m_tag);
-    GameObjectTag xorResult = static_cast<GameObjectTag>(aTag ^ bTag);
+    // int aTag = static_cast<int>(a.m_tag), bTag = static_cast<int>(b.m_tag);
+    // GameObjectTag xorResult = static_cast<GameObjectTag>(aTag ^ bTag);
+    int xorResult = a.m_tag ^ b.m_tag;
     if(xorResult == 0x0011 || xorResult == 0x0110) {
-      float distance = Math::distance(a.m_collider->pos, b.m_collider->pos);
-      if(distance <= (a.m_collider->radius + a.m_collider->radius)) {
+      float distance = Math::distance(a.m_collider->position, b.m_collider->position);
+      if(distance <= (a.m_collider->radius + b.m_collider->radius)) {
         return true;
       }
+      // std::cout << "From A: " << a.m_collider->position.x << ", " << a.m_collider->position.y 
+      //           << " To B: " <<  b.m_collider->position.x << ", " << b.m_collider->position.y 
+      //           << "=> " << distance
+      //           << " & sum of radius " << a.m_collider->radius + b.m_collider->radius << std::endl;
     }
-
     return false;
+}
+
+SDL_FPoint GameObject::getColliderCenterPosition() const {
+  // DEBUG assert
+  SDL_assert(m_collider.get() != nullptr);
+
+  if(m_collider.get() == nullptr) {
+    return {0.0f, 0.0f};
+  }
+
+  return m_collider->position;
 }
 
 void GameObject::onCollided(const GameObject& target) {}

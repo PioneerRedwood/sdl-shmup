@@ -18,11 +18,21 @@
 
 namespace shmup {
 
+enum EnemyState {
+  EnemyStateIdle,
+  EnemyStateHit,
+  EnemyStateMove,
+};
+
 struct Enemy : public GameObject {
-  // TODO: add some stuff
+  // override
+  void onCollided(const GameObject& target) override;
+  void updateCollidePosition(SDL_FPoint pos);
+
+  // properties
   std::vector<SDL_FPoint> debugColliderPoints;
   float speed;
-  void onCollided(const GameObject& target) override;
+  EnemyState state;
 };
 
 class EnemyManager {

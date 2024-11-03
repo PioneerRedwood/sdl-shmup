@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 // File: GameObject.hpp
 // Author: Chris Redwood
@@ -11,13 +10,9 @@
 #include <SDL.h>
 
 #include <memory>
+#include "CircleCollider.hpp"
 
 namespace shmup {
-
-struct CircleCollider {
-  SDL_FPoint pos;
-  float radius;
-};
 
 enum GameObjectTag : int {
   GameObjectTagNone = 0x0000,
@@ -43,6 +38,10 @@ class GameObject {
 
   virtual bool hasCollider() const;
 
+  SDL_FPoint getColliderCenterPosition() const;
+
+  inline void tag(GameObjectTag tag) { m_tag = tag; }
+  
   inline GameObjectTag tag() const { return m_tag; }
 
   inline SDL_FPoint position() const { return m_position; }

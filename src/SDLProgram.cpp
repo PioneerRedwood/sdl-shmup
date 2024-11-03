@@ -51,6 +51,8 @@ bool SDLProgram::init(int x, int y, int width, int height) {
 }
 
 void SDLProgram::quit() {
+  m_neededQuit = true;
+
   // TODO: 프로그램 종료
   // 렌더러를 먼저 삭제
   m_renderer.release();

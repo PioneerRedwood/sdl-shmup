@@ -26,28 +26,32 @@ constexpr auto s_bulletFilepath = "../../resources/bullet.tga";
 unsigned s_bulletMaxYPos = 0;
 float s_bulletColliderRadius = 5.0f;
 unsigned s_maximumBulletCount = 30; // 총알 최대 갯수
-float s_bulletSpeed = 300.0f; // 300.0f 기본값
 
 SDL_FPoint s_playerSpawnPosition;
 int s_playerMoveStepSize = 5;
 int s_playerSpeed = 10;
 float s_playerColliderRadius = 0.0f;
 
-void Bullet::onCollided(const GameObject& target) {
-  if(target.tag() == GameObjectTagEnemy) {
-    state = BulletStateIdle;
-    // TODO: 맞았을 때 처리
-    m_visible = false;
+Player::Player() : GameObject() { m_tag = GameObjectTagPlayer; }
+
+Player::~Player() {
+  if(m_planeTexture) {
+    delete m_planeTexture;
+  }
+  if(m_bulletTexture) {
+    delete m_bulletTexture;
+  }
+  if(m_bullets) {
+    delete[] m_bullets;
+  }
+  if(m_debugColliderPoints) {
+    delete[] m_debugColliderPoints;
   }
 }
 
-Player::Player() : GameObject() { m_tag = GameObjectTagPlayer; }
-
-Player::~Player() {}
-
 bool Player::loadResource(SDL_Renderer* renderer) {
   // load plane texture
-  m_planeTexture = std::make_unique<TGA>();
+  m_planeTexture = new TGA();
   if (m_planeTexture->readFromFile(s_planeFilepath) == false) {
     SDL_assert(false);
     return false;
@@ -61,11 +65,11 @@ bool Player::loadResource(SDL_Renderer* renderer) {
 
   setCollider(0.0f, 0.0f, s_playerColliderRadius);
 
-  Math::createCirclePoints(m_debugColliderPoints, 0.0f, 0.0f,
-                                m_planeTexture->header()->width / 2, 180);
+  m_debugColliderPoints = new SDL_FPoint[180];
+  Math::createCirclePoints(m_debugColliderPoints, 0.0f, 0.0f, m_planeTexture->header()->width / 2);
 
   // load bullet texture
-  m_bulletTexture = std::make_unique<TGA>();
+  m_bulletTexture = new TGA();
   if (m_bulletTexture->readFromFile(s_bulletFilepath) == false) {
     SDL_assert(false);
     return false;
@@ -82,18 +86,6 @@ bool Player::loadResource(SDL_Renderer* renderer) {
   // 임시로 총알 갯수 제한
   m_bulletCount = s_maximumBulletCount;
   m_bullets = new Bullet[m_bulletCount];
-
-  for (unsigned i = 0; i < m_bulletCount; ++i) {
-    Bullet& b = m_bullets[i];
-
-    // 크기, 위치, 충돌체 위치, visible, 스피드 설정
-    b.size({10.0f, 10.0f});
-    b.position({0.0f, 0.0f});
-    b.setCollider(0.0f, 0.0f, 3.0f);
-    b.visible(false);
-    b.tag(GameObjectTagBullet);
-    b.speed = s_bulletSpeed;
-  }
 
   return true;
 }
@@ -113,7 +105,7 @@ void Player::updatePosition(float x, float y) {
   // 충돌체 원형 좌표 수정
   Math::createCirclePoints(m_debugColliderPoints, 
                            colliderPos.x, colliderPos.y, 
-                           s_playerColliderRadius, 180);
+                           s_playerColliderRadius);
 }
 
 /// @brief 델타 타임을 기반으로 상태 업데이트
@@ -133,8 +125,9 @@ void Player::updateState(double delta) {
       m_queuedMovePositionX = 0.0f;
     }
 
-    for (auto& p : m_debugColliderPoints) {
-      p.x += (prevXPos - m_position.x);
+    for (unsigned i = 0; i < 180; ++i) {
+      SDL_FPoint* p = &m_debugColliderPoints[i];
+      p->x += (prevXPos - m_position.x);
     }
 
     updatePosition(m_position.x, m_position.y);
@@ -147,13 +140,13 @@ void Player::updateState(double delta) {
   if (m_elapsedFireTime >= 30.0f) {
     // std::cout << "Player::updateState fire weapon! " << m_elapsedFireTime << std::endl ;
     for (unsigned i = 0; i < m_bulletCount; ++i) {
-      Bullet& b = m_bullets[i];
-      if (b.state == BulletStateIdle) {
+      Bullet* b = &m_bullets[i];
+      if (b->state() == BulletStateIdle) {
         // 총구 위치
-        b.position({m_position.x + (m_planeTexture->header()->width / 2), m_position.y - 5.0f});
-        b.visible(true);
-        b.setCollider(b.position().x + b.size().x / 2, b.position().y + b.size().y / 2, s_bulletColliderRadius);
-        b.state = BulletStateFired;
+        b->position({m_position.x + (m_planeTexture->header()->width / 2), m_position.y - 5.0f});
+        b->visible(true);
+        b->setCollider(b->position().x + b->size().x / 2, b->position().y + b->size().y / 2, s_bulletColliderRadius);
+        b->state(BulletStateFired);
         break;
       }
     }
@@ -172,39 +165,18 @@ void Player::move(int direction) {
             << std::endl;
 }
 
-/// @brief 실시간으로 불릿의 양을 변화시키지 않으면 호출하지 않음
-void Player::spawnBulets(unsigned count) {
-#if 0
-  SDL_assert(m_bulletTexture.get() != nullptr);
-
-  if (m_bullets != nullptr) {
-    delete[] m_bullets;
-  }
-  m_bullets = new Bullet[count];
-  m_bulletCount = count;
-  // memory allocation failed
-  SDL_assert(m_bullets != nullptr);
-
-  for (unsigned i = 0; i < count; ++i) {
-    Bullet& bullet = m_bullets[i];
-    bullet.tag(GameObjectTagBullet);
-    bullet.setCollider(0.0f, 0.0f, 3);
-  }
-#endif
-}
-
 void Player::updateBulletPosition(double delta) {
-  SDL_assert(m_bulletTexture.get() != nullptr);
+  SDL_assert(m_bulletTexture != nullptr);
   SDL_assert(m_bullets != nullptr);
 
   float deltaSeconds = delta / 1000.0f;
   for (unsigned i = 0; i < m_bulletCount; ++i) {
     Bullet* bullet = &m_bullets[i];
 
-    if(bullet->state == BulletStateFired) {
+    if(bullet->state() == BulletStateFired) {
       SDL_FPoint newPos;
-      if(bullet->position().y <= -10.0f || bullet->hasFlaggedCollided) {
-        bullet->state = BulletStateIdle;
+      if(bullet->position().y <= -10.0f) {
+        bullet->state(BulletStateIdle);
         bullet->visible(false);
         
         // 총구 위치로 이동
@@ -221,7 +193,7 @@ void Player::updateBulletPosition(double delta) {
         bullet->setCollider(newPos.x, newPos.y, s_bulletColliderRadius);
       } else {
         // 총알은 현재 위치에서 속도에 맞춰 -Y 방향으로 이동(윗쪽)
-        float yPos = bullet->position().y - (bullet->speed * deltaSeconds);
+        float yPos = bullet->position().y - (bullet->speed() * deltaSeconds);
         bullet->visible(true);
         
         newPos = {

@@ -9,8 +9,7 @@
 
 #include <SDL.h>
 
-#include <memory>
-#include <mutex>
+#include <functional>
 
 #include "SDLRenderer.hpp"
 
@@ -26,29 +25,23 @@ class SDLProgram {
 
   void quit();
 
-  inline SDL_Window* window() {
-    return m_window;
-  }
+  SDL_Window* window();
 
   SDL_Renderer* nativeRenderer();
 
-  inline std::unique_ptr<SDLRenderer>& renderer() {
-    return m_renderer;
-  }
+  SDLRenderer& renderer();
 
-  inline bool neededQuit() const {
-    return m_neededQuit;
-  }
+  bool neededQuit() const;
 
   void handleEvent(SDL_Event* event);
 
-  inline unsigned width() const { return m_width; }
+  unsigned width() const;
 
-  inline unsigned height() const { return m_height; }
+  unsigned height() const;
 
   void updateTime();
 
-  inline double delta() const { return m_delta; }
+  double delta() const;
 
   void bindKeyEvent(std::function<void(SDL_Event*)>&& callback);
 
@@ -59,7 +52,7 @@ private:
 
   SDL_Window* m_window = nullptr;
 
-  std::unique_ptr<SDLRenderer> m_renderer;
+  SDLRenderer* m_renderer;
 
   bool m_neededQuit = false;
 
@@ -73,6 +66,7 @@ private:
 
   double m_delta = 0;
 
+  // TODO: C style function으로 변경할 것
   std::function<void(SDL_Event*)> m_keyEventCallback;
 };
 

@@ -16,15 +16,19 @@ namespace shmup {
 
 GameObject::GameObject() {}
 
-GameObject::~GameObject() {}
+GameObject::~GameObject() {
+  if(m_collider) {
+    delete m_collider;
+  }
+}
 
 GameObject::GameObject(const GameObject& rhs) {
   m_position = rhs.m_position;
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
   m_visible = rhs.m_visible;
-  if(rhs.m_collider.get() != nullptr) {
-    m_collider = std::make_unique<CircleCollider>();
+  if(rhs.m_collider != nullptr) {
+    m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
   }
@@ -35,8 +39,8 @@ GameObject& GameObject::operator=(const GameObject& rhs) {
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
   m_visible = rhs.m_visible;
-  if(rhs.m_collider.get() != nullptr) {
-    m_collider = std::make_unique<CircleCollider>();
+  if(rhs.m_collider != nullptr) {
+    m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
   }
@@ -48,12 +52,12 @@ GameObject::GameObject(GameObject&& rhs) {
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
   m_visible = rhs.m_visible;
-  if(rhs.m_collider.get() != nullptr) {
-    m_collider = std::make_unique<CircleCollider>();
+  if(rhs.m_collider != nullptr) {
+    m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
   }
-  rhs.m_collider.release();
+  delete rhs.m_collider;
 }
 
 GameObject& GameObject::operator=(GameObject&& rhs) {
@@ -61,18 +65,18 @@ GameObject& GameObject::operator=(GameObject&& rhs) {
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
   m_visible = rhs.m_visible;
-  if(rhs.m_collider.get() != nullptr) {
-    m_collider = std::make_unique<CircleCollider>();
+  if(rhs.m_collider != nullptr) {
+    m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
     m_collider->radius = rhs.m_collider->radius;
-    rhs.m_collider.release();
+    delete rhs.m_collider;
   }
   return *this;
 }
 
 void GameObject::setCollider(float x, float y, float radius) {
-  if(!m_collider) {
-    m_collider = std::make_unique<CircleCollider>();
+  if(m_collider == nullptr) {
+    m_collider = new CircleCollider();
   }
 
   m_collider->position = { x, y };
@@ -80,7 +84,7 @@ void GameObject::setCollider(float x, float y, float radius) {
 }
 
 bool GameObject::hasCollider() const {
-    return (m_collider.get() != nullptr);
+    return (m_collider != nullptr);
 }
 
 bool GameObject::isCollided(const GameObject& a, const GameObject& b) {
@@ -110,15 +114,18 @@ bool GameObject::isCollided(const GameObject& a, const GameObject& b) {
 
 SDL_FPoint GameObject::getColliderCenterPosition() const {
   // DEBUG assert
-  SDL_assert(m_collider.get() != nullptr);
+  SDL_assert(m_collider != nullptr);
 
-  if(m_collider.get() == nullptr) {
+  if(m_collider == nullptr) {
     return {0.0f, 0.0f};
   }
 
   return m_collider->position;
 }
 
-void GameObject::onCollided(const GameObject& target) {}
+SDL_FPoint GameObject::position() const { return m_position; }
+
+void GameObject::position(SDL_FPoint pos) { m_position = pos; }
+
 
 }

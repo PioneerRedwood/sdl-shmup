@@ -10,7 +10,6 @@
 
 #include <SDL.h>
 #include <RGBA.hpp>
-#include <list>
 #include "TGA.hpp"
 #include "GameObject.hpp"
 
@@ -18,6 +17,8 @@ namespace shmup {
 
 struct Star : public GameObject {
   float speed;
+
+  void onCollided(const GameObject&) override {};
 };
 
 class StarManager {
@@ -32,23 +33,17 @@ public:
 
   void updateState(float delta);
 
-  inline std::unique_ptr<TGA>& tga() {
-    return m_tga;
-  }
+  const TGA& tga();
 
-  inline const Star* stars() {
-    return m_stars;
-  }
+  const Star* stars();
 
-  inline unsigned starCount() const {
-    return m_starCount;
-  }
+  unsigned starCount() const;
 
 private:
   void setStarRandomPos(Star* star);
 
 private:
-  std::unique_ptr<TGA> m_tga;
+  TGA* m_tga;
 
   Star* m_stars = nullptr;
 

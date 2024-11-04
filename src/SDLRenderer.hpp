@@ -10,9 +10,6 @@
 
 #include <SDL.h>
 
-#include <list>
-#include <memory>
-
 #include "Player.hpp"
 #include "RGBA.hpp"
 #include "StarManager.hpp"
@@ -37,7 +34,7 @@ class SDLRenderer {
 
   void clear();
 
-  void drawTGA(std::unique_ptr<TGA>& tga, int x, int y);
+  void drawTGA(const TGA& tga, int x, int y);
 
   void enableBlending(SDL_BlendMode blendMode);
 

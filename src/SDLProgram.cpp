@@ -26,10 +26,8 @@ bool SDLProgram::init(int x, int y, int width, int height) {
   m_width = width;
   m_height = height;
 
-  // TODO: 프로그램 초기화
   if (SDL_Init(SDL_INIT_EVENTS) < 0) {
-    // TODO: 초기화 시 문제 해결
-    SDL_assert(false);
+    std::cout << "SDL_Init failed error: " << SDL_GetError() << std::endl;
     return false;
   }
 
@@ -37,13 +35,11 @@ bool SDLProgram::init(int x, int y, int width, int height) {
                               SDL_WINDOW_SHOWN);
   if (m_window == nullptr) {
     std::cout << "SDL_CreateWindow failed error: " << SDL_GetError() << std::endl;
-    SDL_assert(false);
     return false;
   }
 
-  m_renderer = std::make_unique<SDLRenderer>();
+  m_renderer = new SDLRenderer();
   if(m_renderer->init(m_window) == false) {
-    SDL_assert(false);
     return false;
   }
 
@@ -53,16 +49,26 @@ bool SDLProgram::init(int x, int y, int width, int height) {
 void SDLProgram::quit() {
   m_neededQuit = true;
 
-  // TODO: 프로그램 종료
-  // 렌더러를 먼저 삭제
-  m_renderer.release();
+  delete m_renderer;
 
   SDL_DestroyWindow(m_window);
 
   SDL_Quit();
 }
 
+SDL_Window* SDLProgram::window() {
+  return m_window;
+}
+
 SDL_Renderer* SDLProgram::nativeRenderer() { return m_renderer->native(); }
+
+SDLRenderer& SDLProgram::renderer() {
+  return *m_renderer;
+}
+
+bool SDLProgram::neededQuit() const {
+  return m_neededQuit;
+}
 
 void SDLProgram::handleEvent(SDL_Event* event) {
   switch (event->type) {
@@ -80,11 +86,23 @@ void SDLProgram::handleEvent(SDL_Event* event) {
   }
 }
 
+unsigned SDLProgram::width() const {
+  return m_width;
+}
+
+unsigned SDLProgram::height() const {
+  return m_height;
+}
+
 void SDLProgram::updateTime() {
   m_lastTime = m_currentTime;
   m_currentTime = SDL_GetPerformanceCounter();
   m_delta = (double)((m_currentTime - m_lastTime) * 1000 /
                      (double)SDL_GetPerformanceFrequency());
+}
+
+double SDLProgram::delta() const {
+  return m_delta;
 }
 
 void SDLProgram::bindKeyEvent(std::function<void(SDL_Event*)>&& callback) {

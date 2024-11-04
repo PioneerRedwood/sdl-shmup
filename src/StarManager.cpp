@@ -22,19 +22,24 @@ unsigned s_starMaxYPos = 0;
 
 StarManager::StarManager() {}
 
-StarManager::~StarManager() {}
+StarManager::~StarManager() {
+  if(m_tga) {
+    delete m_tga;
+  }
+  if(m_stars) {
+    delete[] m_stars;
+  }
+}
 
 bool StarManager::init(SDL_Renderer* renderer, int width, int height) {
-  m_tga = std::make_unique<TGA>();
+  m_tga = new TGA();
   if (m_tga->readFromFile(s_starFilepath) == false) {
     std::cout << "StarManager read texture failed \n";
-    SDL_assert(false);
     return false;
   }
 
   if (m_tga->createTexture(renderer) == false) {
     std::cout << "StarManager create texture failed \n";
-    SDL_assert(false);
     return false;
   }
   s_starMaxXPos = width - m_tga->header()->width;
@@ -74,18 +79,30 @@ void StarManager::updateState(float delta) {
 
   //  std::cout << "Update position: delta " << delta << std::endl;
   for (unsigned i = 0; i < m_starCount; ++i) {
-    Star& star = m_stars[i];
+    Star* star = &m_stars[i];
     // 지나치게 빠르게 움직이는 것을 방지
-    float yPos = star.position().y + (star.speed * (delta / 16.0f));
+    float yPos = star->position().y + (star->speed * (delta / 16.0f));
 
     if (yPos >= s_starMaxYPos) {
-      star.visible(false);
-      setStarRandomPos(&star);
+      star->visible(false);
+      setStarRandomPos(star);
     } else {
-      star.visible(true);
-      star.position({star.position().x, yPos});
+      star->visible(true);
+      star->position({star->position().x, yPos});
     }
   }
+}
+
+const TGA& StarManager::tga() {
+  return *m_tga;
+}
+
+const Star* StarManager::stars() {
+  return m_stars;
+}
+
+unsigned StarManager::starCount() const {
+  return m_starCount;
 }
 
 }  // namespace shmup

@@ -18,12 +18,12 @@
 #include "StarManager.hpp"
 #include "TGA.hpp"
 
-void drawStars(std::unique_ptr<shmup::SDLRenderer>& renderer,
-               std::unique_ptr<shmup::TGA>& tga, const shmup::Star* stars,
+void drawStars(shmup::SDLRenderer& renderer,
+               const shmup::TGA& tga, const shmup::Star* stars,
                unsigned starCount) {
   // renderer->enableBlending(SDL_BLENDMODE_BLEND); // TODO: only pixel
   // rendering requires enabling blending
-  SDL_Texture* tex = const_cast<SDL_Texture*>(tga->sdlTexture());
+  SDL_Texture* tex = const_cast<SDL_Texture*>(tga.sdlTexture());
   SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
   SDL_FRect rect;
   for (unsigned i = 0; i < starCount; ++i) {
@@ -31,26 +31,24 @@ void drawStars(std::unique_ptr<shmup::SDLRenderer>& renderer,
     if (star.visible()) {
       rect.w = star.size().x, rect.h = star.size().y;
       rect.x = star.position().x, rect.y = star.position().y;
-      SDL_RenderCopyF(renderer->native(), tex, nullptr, &rect);
+      SDL_RenderCopyF(renderer.native(), tex, nullptr, &rect);
     }
   }
 }
 
-std::vector<std::vector<SDL_FPoint>> s_colliderPointsList;
-
-void drawPlayer(std::unique_ptr<shmup::SDLRenderer>& renderer,
-                std::unique_ptr<shmup::Player>& player) {
-  renderer->enableBlending(SDL_BLENDMODE_BLEND);
+void drawPlayer(shmup::SDLRenderer& renderer,
+                const shmup::Player& player) {
+  renderer.enableBlending(SDL_BLENDMODE_BLEND);
 
   // TODO: Draw plane
-  renderer->drawTGA(player->planeTexture(), player->position().x,
-                    player->position().y);
+  renderer.drawTGA(player.planeTexture(), player.position().x,
+                    player.position().y);
 }
 
-void drawBullets(std::unique_ptr<shmup::SDLRenderer>& renderer,
-                 std::unique_ptr<shmup::TGA>& tex, const shmup::Bullet* bullets,
+void drawBullets(shmup::SDLRenderer& renderer,
+                 const shmup::TGA& tex, const shmup::Bullet* bullets,
                  unsigned bulletCount) {
-  SDL_Texture* texture = const_cast<SDL_Texture*>(tex->sdlTexture());
+  SDL_Texture* texture = const_cast<SDL_Texture*>(tex.sdlTexture());
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
   SDL_FRect rect;
   for (unsigned i = 0; i < bulletCount; ++i) {
@@ -58,16 +56,16 @@ void drawBullets(std::unique_ptr<shmup::SDLRenderer>& renderer,
     if (bullet.visible()) {
       rect.w = bullet.size().x, rect.h = bullet.size().y;
       rect.x = bullet.position().x, rect.y = bullet.position().y;
-      SDL_RenderCopyF(renderer->native(), texture, nullptr, &rect);
+      SDL_RenderCopyF(renderer.native(), texture, nullptr, &rect);
     }
   }
 }
 
-void drawEnemies(std::unique_ptr<shmup::SDLRenderer>& renderer,
-                 std::unique_ptr<shmup::TGA>& tex, const shmup::Enemy* enemies,
+void drawEnemies(shmup::SDLRenderer& renderer,
+                 const shmup::TGA& tex, const shmup::Enemy* enemies,
                  unsigned enemyCount) {
   // TODO: Draw enemies
-  SDL_Texture* texture = const_cast<SDL_Texture*>(tex->sdlTexture());
+  SDL_Texture* texture = const_cast<SDL_Texture*>(tex.sdlTexture());
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
   SDL_FRect rect;
   for (unsigned i = 0; i < enemyCount; ++i) {
@@ -75,29 +73,27 @@ void drawEnemies(std::unique_ptr<shmup::SDLRenderer>& renderer,
     if (enemy.visible()) {
       rect.w = enemy.size().x, rect.h = enemy.size().y;
       rect.x = enemy.position().x, rect.y = enemy.position().y;
-      SDL_RenderCopyF(renderer->native(), texture, nullptr, &rect);
+      SDL_RenderCopyF(renderer.native(), texture, nullptr, &rect);
     }
   }
 }
 
-void drawColliderLayers(std::unique_ptr<shmup::SDLRenderer>& renderer,
+void drawColliderLayers(shmup::SDLRenderer& renderer,
                         const shmup::Enemy* enemies, unsigned enemyCount,
-                        const std::vector<SDL_FPoint>& playerColliderPoints) {
+                        const SDL_FPoint* playerColliderPoints) {
   // Enemy 충돌체 레이어 그리기
   for (unsigned i = 0; i < enemyCount; ++i) {
     const shmup::Enemy* enemy = &enemies[i];
-    if (enemy->visible() == false || enemy->debugColliderPoints.empty()) {
+    if (enemy->visible() == false) {
       continue;
     }
-    SDL_SetRenderDrawColor(renderer->native(), 255, 255, 255, 255);
-    SDL_RenderDrawPointsF(renderer->native(), enemy->debugColliderPoints.data(),
-                          (int)enemy->debugColliderPoints.size());
+    SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
+    SDL_RenderDrawPointsF(renderer.native(), enemy->debugColliderPoints(), 180);
   }
 
   // Player 충돌체 레이어 그리기
-  SDL_SetRenderDrawColor(renderer->native(), 255, 255, 255, 255);
-  SDL_RenderDrawPointsF(renderer->native(), playerColliderPoints.data(),
-                        (int)playerColliderPoints.size());
+  SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
+  SDL_RenderDrawPointsF(renderer.native(), playerColliderPoints, 180);
 
   // Bullet 충돌체 레이어 그리기
 }
@@ -105,7 +101,6 @@ void drawColliderLayers(std::unique_ptr<shmup::SDLRenderer>& renderer,
 int main(int argc, char** argv) {
   std::srand((unsigned)time(nullptr));
 
-  // std::unique_ptr<SDLProgram> program = std::make_unique<SDLProgram>();
   auto* program = shmup::SDLProgram::instance();
 
   // TODO: width, height 값은 변경 가능 (640, 960 정도로 생각중)
@@ -122,23 +117,22 @@ int main(int argc, char** argv) {
   auto& renderer = program->renderer();
   auto* nativeRenderer = program->nativeRenderer();
 
-  std::unique_ptr<shmup::StarManager> starManager =
-      std::make_unique<shmup::StarManager>();
+  shmup::StarManager* starManager = new shmup::StarManager();
   if (starManager->init(nativeRenderer, program->width(), program->height()) ==
       false) {
     return 1;
   }
   starManager->spawnStars(10);
 
-  std::unique_ptr<shmup::Player> player = std::make_unique<shmup::Player>();
+  shmup::Player* player = new shmup::Player();
   if (player->loadResource(nativeRenderer) == false) {
     return 1;
   }
   // TODO: 플레이어 시작 지점 설정
   const SDL_Point startPoint = {
       (int)(program->width() / 2 -
-            (player->planeTexture()->header()->width / 2)),
-      (int)(program->height() - player->planeTexture()->header()->height)};
+            (player->planeTexture().header()->width / 2)),
+      (int)(program->height() - player->planeTexture().header()->height)};
   player->updatePosition(startPoint.x, startPoint.y);
   program->bindKeyEvent([&player, &program](SDL_Event* event) {
     switch (event->key.keysym.sym) {
@@ -158,8 +152,7 @@ int main(int argc, char** argv) {
     }
   });
 
-  std::unique_ptr<shmup::EnemyManager> enemyManager =
-      std::make_unique<shmup::EnemyManager>();
+  shmup::EnemyManager* enemyManager = new shmup::EnemyManager();
   if (enemyManager->init(nativeRenderer, program->width(), program->height()) ==
       false) {
     program->quit();
@@ -176,16 +169,17 @@ int main(int argc, char** argv) {
       // player <-> enemies
       shmup::GameObject* enemy =
           (shmup::GameObject*)&enemyManager->enemies()[i];
-      if (shmup::GameObject::isCollided((const shmup::GameObject&)*player.get(),
+      if (shmup::GameObject::isCollided((const shmup::GameObject&)*player,
                                         *enemy)) {
-        player->onCollided(*enemy);
-        enemy->onCollided(*player.get());
+        ((shmup::GameObject*)player)->onCollided(*enemy);
+        ((shmup::GameObject*)enemy)->onCollided(*player);
       }
 
       // Enemies <-> bullet
       for (unsigned i = 0; i < player->bulletCount(); ++i) {
         shmup::GameObject* bullet = (shmup::GameObject*)&player->bullets()[i];
-        if (shmup::GameObject::isCollided(*bullet, *enemy)) {
+//        if (shmup::GameObject::isCollided(*bullet, *enemy)) {
+        if (1) {
           enemy->onCollided(*bullet);
           bullet->onCollided(*enemy);
         }
@@ -215,8 +209,8 @@ int main(int argc, char** argv) {
 
     // Rendering
     SDL_SetRenderDrawColor(nativeRenderer, 12, 10, 40, 255);
-    renderer->clear();
-    renderer->disableBlending();
+    renderer.clear();
+    renderer.disableBlending();
 
 #if DEBUG
     SDL_SetRenderDrawColor(nativeRenderer, 255, 0, 0, 255);
@@ -229,7 +223,7 @@ int main(int argc, char** argv) {
 
     drawStars(renderer, starManager->tga(), starManager->stars(),
               starManager->starCount());
-    drawPlayer(renderer, player);
+    drawPlayer(renderer, *player);
     drawBullets(renderer, player->bulletTexture(), player->bullets(),
                 player->bulletCount());
     drawEnemies(renderer, enemyManager->enemyTexture(), enemyManager->enemies(),
@@ -238,7 +232,7 @@ int main(int argc, char** argv) {
                        enemyManager->enemyCount(),
                        player->debugColliderPoints());
 
-    program->renderer()->present();
+    renderer.present();
 
     SDL_Delay(32);  // 16ms delayed
   }

@@ -15,25 +15,9 @@
 
 #include "GameObject.hpp"
 #include "TGA.hpp"
+#include "Enemy.hpp"
 
 namespace shmup {
-
-enum EnemyState {
-  EnemyStateIdle,
-  EnemyStateHit,
-  EnemyStateMove,
-};
-
-struct Enemy : public GameObject {
-  // override
-  void onCollided(const GameObject& target) override;
-  void updateCollidePosition(SDL_FPoint pos);
-
-  // properties
-  std::vector<SDL_FPoint> debugColliderPoints;
-  float speed;
-  EnemyState state;
-};
 
 class EnemyManager {
 public:
@@ -47,23 +31,23 @@ public:
 
   void updateState(double delta);
 
-  inline const Enemy* enemies() {
+  const Enemy* enemies() {
     return m_enemies;
   }
 
-  inline unsigned enemyCount() const {
+  unsigned enemyCount() const {
     return m_enemyCount;
   }
 
-  inline std::unique_ptr<TGA>& enemyTexture() {
-    return m_texture;
+  const TGA& enemyTexture() {
+    return *m_texture;
   }
 
 private:
   void setEnemyRandomPos(Enemy* enemy);
 
 private:
-  std::unique_ptr<TGA> m_texture;
+  TGA* m_texture;
 
   Enemy* m_enemies = nullptr;
 

@@ -20,8 +20,8 @@ public:
   /// @brief 두 좌표 간의 거리
   static float distance(const SDL_FPoint& a, const SDL_FPoint& b);
 
-  /// @brief 좌표를 기준으로 정해진 스텝만큼 원에 대한 좌표 벡터를 반환. 
-  static void createCirclePoints(std::vector<SDL_FPoint>& points, float x, float y, float radius, int steps);
+  /// @brief 정해진 좌표를 중심으로 주어진 반지름으로 구성된 원 좌표를 반환 (좌표 갯수는 항상 180개로 고정)
+  static void createCirclePoints(SDL_FPoint* points, float x, float y, float radius);
 };
 
 

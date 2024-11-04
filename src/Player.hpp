@@ -9,27 +9,11 @@
 
 #include <SDL.h>
 
-#include <list>
-#include <memory>
-
 #include "GameObject.hpp"
 #include "TGA.hpp"
+#include "Bullet.hpp"
 
 namespace shmup {
-
-enum BulletState {
-  BulletStateIdle,
-  BulletStateFired,
-  BulletStateHit,
-  BulletStateDestroyed
-};
-
-struct Bullet : public GameObject {
-  BulletState state;
-  bool hasFlaggedCollided;
-  float speed;
-  void onCollided(const GameObject& target) override;
-};
 
 class Player : public GameObject {
  public:
@@ -45,28 +29,26 @@ class Player : public GameObject {
 
   void move(int direction);
 
-  inline std::unique_ptr<TGA>& planeTexture() { return m_planeTexture; }
+  const TGA& planeTexture() const { return *m_planeTexture; }
 
-  inline std::unique_ptr<TGA>& bulletTexture() { return m_bulletTexture; }
-
-  void spawnBulets(unsigned count);
+  const TGA& bulletTexture() const { return *m_bulletTexture; }
 
   void updateBulletPosition(double delta);
 
-  inline const Bullet* bullets() { return m_bullets; }
+  const Bullet* bullets() { return m_bullets; }
 
-  inline unsigned bulletCount() const { return m_bulletCount; }
+  unsigned bulletCount() const { return m_bulletCount; }
 
-  const std::vector<SDL_FPoint>& debugColliderPoints() {
+  const SDL_FPoint* debugColliderPoints() {
     return m_debugColliderPoints;
   }
 
   void onCollided(const GameObject& target) override;
 
  private:
-  std::unique_ptr<TGA> m_planeTexture;
+  TGA* m_planeTexture;
 
-  std::unique_ptr<TGA> m_bulletTexture;
+  TGA* m_bulletTexture;
 
   unsigned m_hp;
 
@@ -78,7 +60,7 @@ class Player : public GameObject {
 
   double m_elapsedFireTime;
 
-  std::vector<SDL_FPoint> m_debugColliderPoints;
+  SDL_FPoint* m_debugColliderPoints = nullptr;
 };
 
 }  // namespace shmup

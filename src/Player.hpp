@@ -46,19 +46,17 @@ class Player : public GameObject {
   void onCollided(const GameObject& target) override;
 
  private:
-  TGA* m_planeTexture;
+  TGA* m_planeTexture = nullptr;
 
-  TGA* m_bulletTexture;
-
-  unsigned m_hp;
+  TGA* m_bulletTexture = nullptr;
 
   float m_queuedMovePositionX = 0.0f;
 
-  Bullet* m_bullets;
+  Bullet* m_bullets = nullptr;
 
-  unsigned m_bulletCount;
+  unsigned m_bulletCount = 0;
 
-  double m_elapsedFireTime;
+  double m_elapsedFireTime = 0.0f;
 
   SDL_FPoint* m_debugColliderPoints = nullptr;
 };

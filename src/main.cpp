@@ -98,6 +98,8 @@ void drawColliderLayers(shmup::SDLRenderer& renderer,
   // Bullet 충돌체 레이어 그리기
 }
 
+#define DEBUG true
+
 int main(int argc, char** argv) {
   std::srand((unsigned)time(nullptr));
 
@@ -157,9 +159,14 @@ int main(int argc, char** argv) {
       false) {
     program->quit();
   }
+#if DEBUG
+  enemyManager->spawnEnemies(1);
+#else
   enemyManager->spawnEnemies(10);
+#endif
 
   // Main loop
+  program->updateTime();
   while (program->neededQuit() == false) {
 #if DEBUG
     shmup::Bullet* b;
@@ -172,14 +179,13 @@ int main(int argc, char** argv) {
       if (shmup::GameObject::isCollided((const shmup::GameObject&)*player,
                                         *enemy)) {
         ((shmup::GameObject*)player)->onCollided(*enemy);
-        ((shmup::GameObject*)enemy)->onCollided(*player);
+        enemy->onCollided(*player);
       }
 
       // Enemies <-> bullet
       for (unsigned i = 0; i < player->bulletCount(); ++i) {
         shmup::GameObject* bullet = (shmup::GameObject*)&player->bullets()[i];
-//        if (shmup::GameObject::isCollided(*bullet, *enemy)) {
-        if (1) {
+        if (shmup::GameObject::isCollided(*bullet, *enemy)) {
           enemy->onCollided(*bullet);
           bullet->onCollided(*enemy);
         }

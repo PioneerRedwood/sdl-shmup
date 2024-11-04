@@ -27,13 +27,13 @@ public:
   void onCollided(const GameObject& target) override;
 
 public:
-  void speed(float speed) { m_speed = speed; }
+  void speed(float speed);
   
-  float speed() const { return m_speed; }
+  float speed() const;
 
-  void state(BulletState state) { m_state = state; }
+  void state(BulletState state);
 
-  BulletState state() const { return m_state; }
+  BulletState state() const;
 
 private:
   BulletState m_state;

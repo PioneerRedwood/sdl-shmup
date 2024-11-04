@@ -165,15 +165,17 @@ void Player::move(int direction) {
             << std::endl;
 }
 
-void Player::updateBulletPosition(double delta) {
-  SDL_assert(m_bulletTexture != nullptr);
-  SDL_assert(m_bullets != nullptr);
+void Player::updateBulletPosition(double delta) {  
+  if (m_bulletTexture == nullptr || m_bullets == nullptr) {
+    return;
+  }
 
   float deltaSeconds = delta / 1000.0f;
   for (unsigned i = 0; i < m_bulletCount; ++i) {
     Bullet* bullet = &m_bullets[i];
 
     if(bullet->state() == BulletStateFired) {
+      std::cout << "Player::updateBulletPosition 1>> " << i << " " << bullet->position().y << " ";
       SDL_FPoint newPos;
       if(bullet->position().y <= -10.0f) {
         bullet->state(BulletStateIdle);
@@ -195,6 +197,7 @@ void Player::updateBulletPosition(double delta) {
         // 총알은 현재 위치에서 속도에 맞춰 -Y 방향으로 이동(윗쪽)
         float yPos = bullet->position().y - (bullet->speed() * deltaSeconds);
         bullet->visible(true);
+        bullet->state(BulletStateFired);
         
         newPos = {
           bullet->position().x, yPos
@@ -208,6 +211,7 @@ void Player::updateBulletPosition(double delta) {
         };
         bullet->setCollider(newPos.x, newPos.y, s_bulletColliderRadius);
       }
+      std::cout << "Player::updateBulletPosition 2>> " << i << " " << bullet->position().y << std::endl;
     }
   }
 }

@@ -19,9 +19,18 @@ Bullet::Bullet() : GameObject() {
   m_visible = false;
   m_tag = GameObjectTagBullet;
   m_speed = s_bulletSpeed;
+  m_state = BulletStateIdle;
 }
 
 Bullet::~Bullet() {}
+
+void Bullet::speed(float speed) { m_speed = speed; }
+
+float Bullet::speed() const { return m_speed; }
+
+void Bullet::state(BulletState state) { m_state = state; }
+
+BulletState Bullet::state() const { return m_state; }
 
 void Bullet::onCollided(const GameObject& target) {
   if(target.tag() == GameObjectTagEnemy) {

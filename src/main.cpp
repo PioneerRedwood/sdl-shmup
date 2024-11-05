@@ -39,8 +39,6 @@ void drawStars(shmup::SDLRenderer& renderer,
 void drawPlayer(shmup::SDLRenderer& renderer,
                 const shmup::Player& player) {
   renderer.enableBlending(SDL_BLENDMODE_BLEND);
-
-  // TODO: Draw plane
   renderer.drawTGA(player.planeTexture(), player.position().x,
                     player.position().y);
 }
@@ -98,17 +96,19 @@ void drawColliderLayers(shmup::SDLRenderer& renderer,
   // Bullet 충돌체 레이어 그리기
 }
 
-/// @brief 충돌 검사하면서 각 에너미나 불릿의 상태가 변경되도록 플래그 설정
+/// @brief 충돌 검사하면서 각 적나 총알의 상태가 변경되도록 플래그 설정
 /// 프레임 스킵이 발생했을 때 처리되도록 수행
 void performCollisionChecks(shmup::EnemyManager* enemyManager,
                   shmup::Player* player,
                   double delta) {
   using namespace shmup;
+
+  // 쿼드 트리를 사용할 수 있을까?
   for (unsigned i = 0; i < enemyManager->enemyCount(); ++i) {
     // player <-> enemies
     Enemy* enemy = &enemyManager->enemies()[i];
 
-    if (GameObject::isCollided(*player, *enemy)) {
+    if (player->isVisible() && enemy->isVisible() && GameObject::isCollided(*player, *enemy)) {
       player->onCollided(*enemy);
       enemy->onCollided(*player);
     }
@@ -116,7 +116,7 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
     // Enemies <-> bullet
     for (unsigned i = 0; i < player->bulletCount(); ++i) {
       Bullet* bullet = &player->bullets()[i];
-      if (GameObject::isCollided(*bullet, *enemy)) {
+      if (bullet->isVisible() && enemy->isVisible() && GameObject::isCollided(*bullet, *enemy)) {
         enemy->onCollided(*bullet);
         bullet->onCollided(*enemy);
       }
@@ -211,15 +211,6 @@ int main(int argc, char** argv) {
     SDL_SetRenderDrawColor(nativeRenderer, 12, 10, 40, 255);
     renderer.clear();
     renderer.disableBlending();
-
-//#if DEBUG
-//    SDL_SetRenderDrawColor(nativeRenderer, 255, 0, 0, 255);
-//    SDL_RenderDrawLineF(nativeRenderer, b->getColliderCenterPosition().x,
-//                        b->getColliderCenterPosition().y,
-//                        e->getColliderCenterPosition().x,
-//                        e->getColliderCenterPosition().y);
-//    SDL_RenderFlush(nativeRenderer);
-//#endif
 
     drawStars(renderer, starManager->tga(), starManager->stars(),
               starManager->starCount());

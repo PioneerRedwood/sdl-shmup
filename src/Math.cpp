@@ -9,6 +9,10 @@
 
 namespace shmup {
 
+Vector2::Vector2() : x(0.0f), y(0.0f) {}
+
+Vector2::Vector2(float x, float y) : x(x), y(y) {}
+
 Vector2 Vector2::operator+(const Vector2& other) const {
   return { x + other.x, y + other.y };
 }
@@ -18,8 +22,8 @@ Vector2 Vector2::operator*(float scalar) const {
 }
 
 Vector2& Vector2::operator=(const Vector2& other) {
-  x += other.x;
-  y += other.y;
+  x = other.x;
+  y = other.y;
   return *this;
 }
 

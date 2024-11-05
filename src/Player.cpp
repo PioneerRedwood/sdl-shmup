@@ -175,7 +175,7 @@ void Player::updateBulletPosition(double delta) {
     Bullet* bullet = &m_bullets[i];
 
     if(bullet->state() == BulletStateFired) {
-      std::cout << "Player::updateBulletPosition 1>> " << i << " " << bullet->position().y << " ";
+      //std::cout << "Player::updateBulletPosition 1>> " << i << " " << bullet->position().y << " ";
       Vector2 newPos;
       if(bullet->position().y <= -10.0f) {
         bullet->state(BulletStateIdle);
@@ -211,7 +211,7 @@ void Player::updateBulletPosition(double delta) {
         };
         bullet->setCollider(newPos.x, newPos.y, s_bulletColliderRadius);
       }
-      std::cout << "Player::updateBulletPosition 2>> " << i << " " << bullet->position().y << std::endl;
+      //std::cout << "Player::updateBulletPosition 2>> " << i << " " << bullet->position().y << std::endl;
     }
   }
 }

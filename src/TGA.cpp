@@ -14,8 +14,8 @@ namespace shmup {
 TGA::TGA() {}
 
 TGA::~TGA() {
-    if(m_pixel_data != nullptr) {
-        delete[] m_pixel_data;
+    if(m_pixelData != nullptr) {
+        delete[] m_pixelData;
     }
     
     if(m_texture != nullptr) {
@@ -28,7 +28,7 @@ const TGAHeader* TGA::header() const {
 }
 
 const RGBA* TGA::pixelData() const {
-    return m_pixel_data;
+    return m_pixelData;
 }
 
 SDL_Texture const* TGA::sdlTexture() const {
@@ -49,11 +49,11 @@ bool TGA::readFromFile(const char* filepath) {
         return false;
     }
     
-    m_pixel_data = new RGBA[m_header.width * m_header.height];
+    m_pixelData = new RGBA[m_header.width * m_header.height];
 
     // Read pixel data
     const size_t imageSize = m_header.width * m_header.height * (m_header.pixel_depth / 8);
-    read = fread(m_pixel_data, imageSize, 1, fp);
+    read = fread(m_pixelData, imageSize, 1, fp);
     if(read == 0) {
         return false;
     }
@@ -67,7 +67,7 @@ bool TGA::createTexture(SDL_Renderer *renderer) {
     m_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGRA32, 
                                   SDL_TEXTUREACCESS_STATIC, m_header.width, m_header.height);
     const int pitch = m_header.width * (m_header.pixel_depth / 8);
-    if(SDL_UpdateTexture(m_texture, nullptr, m_pixel_data, pitch) != 0) {
+    if(SDL_UpdateTexture(m_texture, nullptr, m_pixelData, pitch) != 0) {
         SDL_assert(false);
         return false;
     }

@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include <SDL.h>
+#include "Math.hpp"
 
 namespace shmup {
 
 struct CircleCollider {
-  SDL_FPoint position;
+  Vector2 position;
   float radius;
 };
 

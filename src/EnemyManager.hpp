@@ -7,12 +7,6 @@
 
 #pragma once
 
-#include <SDL.h>
-
-#include <list>
-#include <memory>
-#include <vector>
-
 #include "GameObject.hpp"
 #include "TGA.hpp"
 #include "Enemy.hpp"
@@ -27,11 +21,11 @@ public:
 
   bool init(SDL_Renderer* renderer, int width, int height);
 
-  void spawnEnemies(unsigned count);
+  void spawnEnemy();
 
   void updateState(double delta);
 
-  const Enemy* enemies() {
+  Enemy* enemies() {
     return m_enemies;
   }
 
@@ -52,6 +46,8 @@ private:
   Enemy* m_enemies = nullptr;
 
   unsigned m_enemyCount = 0;
+
+  double m_lastTimeEnemySpawned = 0.0f;
 };
 
 }  // namespace shmup

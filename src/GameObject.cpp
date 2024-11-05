@@ -26,7 +26,7 @@ GameObject::GameObject(const GameObject& rhs) {
   m_position = rhs.m_position;
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
-  m_visible = rhs.m_visible;
+  m_isVisible = rhs.m_isVisible;
   if(rhs.m_collider != nullptr) {
     m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
@@ -38,7 +38,7 @@ GameObject& GameObject::operator=(const GameObject& rhs) {
   m_position = rhs.m_position;
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
-  m_visible = rhs.m_visible;
+  m_isVisible = rhs.m_isVisible;
   if(rhs.m_collider != nullptr) {
     m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
@@ -51,7 +51,7 @@ GameObject::GameObject(GameObject&& rhs) {
   m_position = rhs.m_position;
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
-  m_visible = rhs.m_visible;
+  m_isVisible = rhs.m_isVisible;
   if(rhs.m_collider != nullptr) {
     m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
@@ -64,7 +64,7 @@ GameObject& GameObject::operator=(GameObject&& rhs) {
   m_position = rhs.m_position;
   m_size = rhs.m_size;
   m_tag = rhs.m_tag;
-  m_visible = rhs.m_visible;
+  m_isVisible = rhs.m_isVisible;
   if(rhs.m_collider != nullptr) {
     m_collider = new CircleCollider();
     m_collider->position = rhs.m_collider->position;
@@ -112,7 +112,7 @@ bool GameObject::isCollided(const GameObject& a, const GameObject& b) {
     return false;
 }
 
-SDL_FPoint GameObject::getColliderCenterPosition() const {
+Vector2 GameObject::getColliderCenterPosition() const {
   // DEBUG assert
   SDL_assert(m_collider != nullptr);
 
@@ -123,9 +123,9 @@ SDL_FPoint GameObject::getColliderCenterPosition() const {
   return m_collider->position;
 }
 
-SDL_FPoint GameObject::position() const { return m_position; }
+Vector2 GameObject::position() const { return m_position; }
 
-void GameObject::position(SDL_FPoint pos) { m_position = pos; }
+void GameObject::position(Vector2 pos) { m_position = pos; }
 
 
 }

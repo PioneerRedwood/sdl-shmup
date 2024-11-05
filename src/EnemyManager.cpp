@@ -7,7 +7,11 @@
 
 #include "EnemyManager.hpp"
 
+#include <SDL.h>
+#include <iostream>
+
 #include "Math.hpp"
+
 namespace shmup {
 
 #if _WIN32
@@ -16,11 +20,14 @@ constexpr auto s_enemyFilepath = "../resources/enemy.tga";
 constexpr auto s_enemyFilepath = "../../resources/enemy.tga";
 #endif
 
+// 아래 값들은 게임 시작 데이터로 분류 가능
 unsigned s_enemyMaxXPos = 0;
 unsigned s_enemyMaxYPos = 0;
 float s_enemySpeed = 30.0f;
+unsigned s_enemyMaxCount = 30;
 unsigned s_enemyDebugCircleColliderSteps = 180;
 float s_enemyCircleColliderRadius = 3.0f;
+double s_spawnDelay = 1500.0f; // 1.5초 당 한번 씩 Idle 상태의 적을 생성
 
 EnemyManager::EnemyManager() {}
 
@@ -32,100 +39,139 @@ EnemyManager::~EnemyManager() {
 bool EnemyManager::init(SDL_Renderer* renderer, int width, int height) {
   m_texture = new TGA();
   if (m_texture->readFromFile(s_enemyFilepath) == false) {
+    std::cout << "EnemyManager read enemy TGA failed \n";
     return false;
   }
 
   if (m_texture->createTexture(renderer) == false) {
+    std::cout << "EnemyManager create enemy texture failed \n";
     return false;
   }
 
-  s_enemyCircleColliderRadius = m_texture->header()->width / 2;
+  Enemy::setColliderRadius(m_texture->header()->width / 2);
 
   s_enemyMaxXPos = width - m_texture->header()->width;
   s_enemyMaxYPos = height - m_texture->header()->height * 2; // 밑에 완전히 사라질 정도
 
+  // 에너미 배열 처음 생성
+  m_enemies = new Enemy[s_enemyMaxCount];
+  if(m_enemies == nullptr) {
+    std::cout << "EnemyManager allocate pre enemy array failed \n";
+    return false;
+  }
+  m_enemyCount = s_enemyMaxCount;
+
+  // 한번 설정되고 변하지 않는 값만 여기서 설정
+  for (unsigned i = 0; i < m_enemyCount; ++i) {
+    Enemy* enemy = &m_enemies[i];
+    Vector2 value = {(float)m_texture->header()->width,
+                     (float)m_texture->header()->height};
+    enemy->size(value);
+    enemy->setCollider(0.0f, 0.0f, 0.0f);
+  }
   return true;
 }
 
 void EnemyManager::setEnemyRandomPos(Enemy* enemy) {
-  SDL_assert(m_texture != nullptr);
+  if (m_texture == nullptr) {
+    return;
+  }
 
-  SDL_FPoint value = {(float)m_texture->header()->width,
-                      (float)m_texture->header()->height};
-  enemy->size(value);
-
-  value = {(float)(rand() /
-                   ((RAND_MAX + 1u) / s_enemyMaxXPos)),  // 0 ~ s_enemyMaxXPos
-           0.0f};
+  // x: 0 ~ s_enemyMaxXPos 사이의 값으로 설정
+  // y: 임의로 -20.0
+  Vector2 value = {(float)(rand() / ((RAND_MAX + 1u) /
+                                     s_enemyMaxXPos)),  
+                   -20.0f};
   enemy->position(value);
-  
-  enemy->speed((float)(10.0f + rand() / ((RAND_MAX + 1u) / 25)));
 
   // 충돌체 위치 업데이트
-  SDL_FPoint colliderPos = {
+  Vector2 colliderPos = {
       enemy->position().x + ((float)m_texture->header()->width / 2),
       enemy->position().y + ((float)m_texture->header()->height / 2)};
-  enemy->updateCollidePosition(colliderPos);
+  enemy->setCollider(colliderPos.x, colliderPos.y, 0.0f);
+
+  // 디버그 충돌체 정점 업데이트
+  enemy->moveDebugColliderPoints(colliderPos);
 }
 
-void EnemyManager::spawnEnemies(unsigned count) {
-  // TODO: Spawn enemies array
-  m_enemies = new Enemy[count];
-  m_enemyCount = count;
-
-  SDL_assert(m_enemies != nullptr);
-
-  for (unsigned i = 0; i < count; ++i) {
-    Enemy* enemy = &m_enemies[i];
-    setEnemyRandomPos(enemy);
+/// @brief 에너미 생성
+void EnemyManager::spawnEnemy() {
+  if(m_enemies == nullptr) return;
+  // Idle 상태인 에너미를 선택
+  Enemy* enemy = nullptr;
+  for(unsigned i = 0; i < m_enemyCount; ++i) {
+    if(m_enemies[i].state() == EnemyStateIdle) {
+      enemy = &m_enemies[i];
+      break;
+    }
   }
+
+  // 랜덤한 위치 { randomX, -20.0f } 같은 위치로 이동
+  // 콜라이더 위치 변경
+  setEnemyRandomPos(enemy);
+
+  // 속도 업데이트
+  enemy->speed((float)(10.0f + rand() / ((RAND_MAX + 1u) / 25)));
+
+  // 에너미 상태 변경
+  enemy->state(EnemyStateMove);
+
+  // 최종 목적지 설정
+  enemy->destination({ enemy->position().x, 0.0f });
 }
 
 void EnemyManager::updateState(double delta) {
-  SDL_assert(m_enemies != nullptr);
+  if(m_enemies == nullptr) {
+    return;
+  }
 
-#if 1
-  float deltaSeconds = delta / 1000.0f;
-  for (unsigned i = 0; i < m_enemyCount; ++i) {
+  double deltaSeconds = delta / 1000.0f;
+  m_lastTimeEnemySpawned += deltaSeconds;
+
+  if(m_lastTimeEnemySpawned >= s_spawnDelay) {
+    // 새로운 에너미 스폰
+    spawnEnemy();
+  }
+
+  // 에너미 배열 돌면서 "움직임" 상태인 에너미 이동
+  for(unsigned i = 0; i < m_enemyCount; ++i) {
     Enemy* enemy = &m_enemies[i];
-    // 만약 현재 위치가 최대 Y 좌표를 벗어난 경우 보이지 않도록 수정
-    if(enemy->position().y >= s_enemyMaxYPos) {
-      // 보이지 않도록 한 뒤, 스폰 장소로 이동
-      enemy->visible(false);
-      enemy->state(EnemyStateIdle);
-      setEnemyRandomPos(enemy);
-    } else {
-      enemy->visible(true);
-      enemy->state(EnemyStateMove);
-      // 이동 좌표
-      float yPos = enemy->position().y + enemy->speed() * deltaSeconds;
+    switch (enemy->state()) {
+      case EnemyStateMove: {
+        float deltaYPos = enemy->position().y;
+        float newYPos =
+            enemy->position().y * (1 - deltaSeconds * s_enemySpeed) +
+            enemy->destination().y * deltaSeconds * s_enemySpeed;
+        if (std::fabsf(enemy->position().y - newYPos) <= 0.001f) {
+          // 초기 위치로
+          enemy->isVisible(false);
+          enemy->state(EnemyStateIdle);
+          setEnemyRandomPos(enemy);
+          continue;
+        }
+        enemy->position({enemy->position().x, newYPos});
 
-      enemy->state(EnemyStateMove);
+        // 충돌체 위치 업데이트
+        Vector2 pos = enemy->getColliderCenterPosition();
+        enemy->setCollider(pos.x, pos.y + deltaYPos, 0.0f);
 
-      // 위치 업데이트
-      enemy->position({ enemy->position().x, yPos });
-
-      // 충돌체 위치 업데이트
-      SDL_FPoint colliderPos = {
-        enemy->position().x + ((float)m_texture->header()->width / 2),
-        enemy->position().y + ((float)m_texture->header()->height / 2)};
-      enemy->setCollider(colliderPos.x, colliderPos.y,
-                          s_enemyCircleColliderRadius);
-
-      // TODO: Debug collider points 위치 업데이트
-      // 이 위치 이동은 Math::createCirclePoints 보다 빠를 것
-      enemy->moveYPosColliderPoints(enemy->speed() * deltaSeconds);
+        // DEBUG: 이 위치 이동은 Math::createCirclePoints 보다 빠를 것
+        deltaYPos = newYPos - deltaYPos;
+        for (unsigned i = 0; i < 180; ++i) {
+          enemy->debugColliderPoints()[i].y += deltaYPos;
+        }
+        break;
+      }
+      case EnemyStateHit: {
+        // 맞은 것에 대한 처리
+        enemy->isVisible(false);
+        enemy->state(EnemyStateIdle);
+        setEnemyRandomPos(enemy);
+        break;
+      }
+      default: break;
     }
   }
-#else
-  // 디버그용
-  Enemy* e = &m_enemies[0];
-  e->position({176, 333});
-  SDL_FPoint colliderPos = {
-    e->position().x + ((float)m_texture->header()->width / 2),
-    e->position().y + ((float)m_texture->header()->height / 2)};
-  e->updateCollidePosition(colliderPos);
-#endif
 }
 
 }  // namespace shmup

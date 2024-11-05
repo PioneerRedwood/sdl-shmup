@@ -35,32 +35,30 @@ class Player : public GameObject {
 
   void updateBulletPosition(double delta);
 
-  const Bullet* bullets() { return m_bullets; }
+  Bullet* bullets() { return m_bullets; }
 
   unsigned bulletCount() const { return m_bulletCount; }
 
-  const SDL_FPoint* debugColliderPoints() {
+  const Vector2* debugColliderPoints() {
     return m_debugColliderPoints;
   }
 
   void onCollided(const GameObject& target) override;
 
  private:
-  TGA* m_planeTexture;
+  TGA* m_planeTexture = nullptr;
 
-  TGA* m_bulletTexture;
-
-  unsigned m_hp;
+  TGA* m_bulletTexture = nullptr;
 
   float m_queuedMovePositionX = 0.0f;
 
-  Bullet* m_bullets;
+  Bullet* m_bullets = nullptr;
 
-  unsigned m_bulletCount;
+  unsigned m_bulletCount = 0;
 
-  double m_elapsedFireTime;
+  double m_elapsedFireTime = 0.0f;
 
-  SDL_FPoint* m_debugColliderPoints = nullptr;
+  Vector2* m_debugColliderPoints = nullptr;
 };
 
 }  // namespace shmup

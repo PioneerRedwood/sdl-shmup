@@ -48,7 +48,7 @@ bool StarManager::init(SDL_Renderer* renderer, int width, int height) {
 }
 
 void StarManager::setStarRandomPos(Star* star) {
-  SDL_FPoint value = {
+  Vector2 value = {
     (float)(1 * rand() / ((RAND_MAX + 1u) / m_tga->header()->width)),
     (float)(1 * rand() / ((RAND_MAX + 1u) / m_tga->header()->height))
   };
@@ -84,10 +84,10 @@ void StarManager::updateState(float delta) {
     float yPos = star->position().y + (star->speed * (delta / 16.0f));
 
     if (yPos >= s_starMaxYPos) {
-      star->visible(false);
+      star->isVisible(false);
       setStarRandomPos(star);
     } else {
-      star->visible(true);
+      star->isVisible(true);
       star->position({star->position().x, yPos});
     }
   }

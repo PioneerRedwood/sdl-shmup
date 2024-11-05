@@ -9,12 +9,26 @@
 
 namespace shmup {
 
-float Math::distance(const SDL_FPoint& a, const SDL_FPoint& b) {
+Vector2 Vector2::operator+(const Vector2& other) const {
+  return { x + other.x, y + other.y };
+}
+
+Vector2 Vector2::operator*(float scalar) const {
+  return { x * scalar, y * scalar };
+}
+
+Vector2& Vector2::operator=(const Vector2& other) {
+  x += other.x;
+  y += other.y;
+  return *this;
+}
+
+float Math::distance(const Vector2& a, const Vector2& b) {
   return (float)std::sqrt(std::fabsf(a.x - b.x) * std::fabsf(a.x - b.x) +
                           std::fabsf(a.y - b.y) * std::fabsf(a.y - b.y));
 }
 
-void Math::createCirclePoints(SDL_FPoint* points, float x, float y,
+void Math::createCirclePoints(Vector2* points, float x, float y,
                               float radius) {
   float angle = 0.0f;
   const float stepSize = 2.0f;

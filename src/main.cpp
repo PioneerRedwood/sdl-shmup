@@ -28,7 +28,7 @@ void drawStars(shmup::SDLRenderer& renderer,
   SDL_FRect rect;
   for (unsigned i = 0; i < starCount; ++i) {
     const shmup::Star& star = stars[i];
-    if (star.visible()) {
+    if (star.isVisible()) {
       rect.w = star.size().x, rect.h = star.size().y;
       rect.x = star.position().x, rect.y = star.position().y;
       SDL_RenderCopyF(renderer.native(), tex, nullptr, &rect);
@@ -53,7 +53,7 @@ void drawBullets(shmup::SDLRenderer& renderer,
   SDL_FRect rect;
   for (unsigned i = 0; i < bulletCount; ++i) {
     const shmup::Bullet& bullet = bullets[i];
-    if (bullet.visible()) {
+    if (bullet.isVisible()) {
       rect.w = bullet.size().x, rect.h = bullet.size().y;
       rect.x = bullet.position().x, rect.y = bullet.position().y;
       SDL_RenderCopyF(renderer.native(), texture, nullptr, &rect);
@@ -70,7 +70,7 @@ void drawEnemies(shmup::SDLRenderer& renderer,
   SDL_FRect rect;
   for (unsigned i = 0; i < enemyCount; ++i) {
     const shmup::Enemy& enemy = enemies[i];
-    if (enemy.visible()) {
+    if (enemy.isVisible()) {
       rect.w = enemy.size().x, rect.h = enemy.size().y;
       rect.x = enemy.position().x, rect.y = enemy.position().y;
       SDL_RenderCopyF(renderer.native(), texture, nullptr, &rect);
@@ -80,23 +80,51 @@ void drawEnemies(shmup::SDLRenderer& renderer,
 
 void drawColliderLayers(shmup::SDLRenderer& renderer,
                         const shmup::Enemy* enemies, unsigned enemyCount,
-                        const SDL_FPoint* playerColliderPoints) {
+                        const shmup::Vector2* playerColliderPoints) {
   // Enemy 충돌체 레이어 그리기
   for (unsigned i = 0; i < enemyCount; ++i) {
     const shmup::Enemy* enemy = &enemies[i];
-    if (enemy->visible() == false) {
+    if (enemy->isVisible() == false) {
       continue;
     }
     SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
-    SDL_RenderDrawPointsF(renderer.native(), enemy->debugColliderPoints(), 180);
+    SDL_RenderDrawPointsF(renderer.native(), (const SDL_FPoint*)enemy->debugColliderPoints(), 180);
   }
 
   // Player 충돌체 레이어 그리기
   SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
-  SDL_RenderDrawPointsF(renderer.native(), playerColliderPoints, 180);
+  SDL_RenderDrawPointsF(renderer.native(), (const SDL_FPoint*)playerColliderPoints, 180);
 
   // Bullet 충돌체 레이어 그리기
 }
+
+/// @brief 충돌 검사하면서 각 에너미나 불릿의 상태가 변경되도록 플래그 설정
+/// 프레임 스킵이 발생했을 때 처리되도록 수행
+void performCollisionChecks(shmup::EnemyManager* enemyManager,
+                  shmup::Player* player,
+                  double delta) {
+  using namespace shmup;
+  for (unsigned i = 0; i < enemyManager->enemyCount(); ++i) {
+    // player <-> enemies
+    Enemy* enemy = &enemyManager->enemies()[i];
+
+    if (GameObject::isCollided(*player, *enemy)) {
+      player->onCollided(*enemy);
+      enemy->onCollided(*player);
+    }
+
+    // Enemies <-> bullet
+    for (unsigned i = 0; i < player->bulletCount(); ++i) {
+      Bullet* bullet = &player->bullets()[i];
+      if (GameObject::isCollided(*bullet, *enemy)) {
+        enemy->onCollided(*bullet);
+        bullet->onCollided(*enemy);
+      }
+    }
+  }
+}
+
+#define DEBUG true
 
 int main(int argc, char** argv) {
   std::srand((unsigned)time(nullptr));
@@ -157,42 +185,14 @@ int main(int argc, char** argv) {
       false) {
     program->quit();
   }
-  enemyManager->spawnEnemies(10);
 
   // Main loop
+  program->updateTime();
   while (program->neededQuit() == false) {
-#if DEBUG
-    shmup::Bullet* b;
-    shmup::Enemy* e;
-#endif
-    for (unsigned i = 0; i < enemyManager->enemyCount(); ++i) {
-      // player <-> enemies
-      shmup::GameObject* enemy =
-          (shmup::GameObject*)&enemyManager->enemies()[i];
-      if (shmup::GameObject::isCollided((const shmup::GameObject&)*player,
-                                        *enemy)) {
-        ((shmup::GameObject*)player)->onCollided(*enemy);
-        ((shmup::GameObject*)enemy)->onCollided(*player);
-      }
-
-      // Enemies <-> bullet
-      for (unsigned i = 0; i < player->bulletCount(); ++i) {
-        shmup::GameObject* bullet = (shmup::GameObject*)&player->bullets()[i];
-//        if (shmup::GameObject::isCollided(*bullet, *enemy)) {
-        if (1) {
-          enemy->onCollided(*bullet);
-          bullet->onCollided(*enemy);
-        }
-
-#if DEBUG
-        e = (shmup::Enemy*)enemy;
-        b = (shmup::Bullet*)bullet;
-#endif
-      }
-    }
-
     // Update delta
     program->updateTime();
+
+    performCollisionChecks(enemyManager, player, program->delta());
 
     // Handle input events
     SDL_Event event;
@@ -202,7 +202,7 @@ int main(int argc, char** argv) {
 
     std::cout << "Delta: " << program->delta() << std::endl;
 
-    // Update spawnable stuff (Change states)
+    // 각 상태 변화
     starManager->updateState(program->delta());
     player->updateState(program->delta());
     enemyManager->updateState(program->delta());
@@ -212,14 +212,14 @@ int main(int argc, char** argv) {
     renderer.clear();
     renderer.disableBlending();
 
-#if DEBUG
-    SDL_SetRenderDrawColor(nativeRenderer, 255, 0, 0, 255);
-    SDL_RenderDrawLineF(nativeRenderer, b->getColliderCenterPosition().x,
-                        b->getColliderCenterPosition().y,
-                        e->getColliderCenterPosition().x,
-                        e->getColliderCenterPosition().y);
-    SDL_RenderFlush(nativeRenderer);
-#endif
+//#if DEBUG
+//    SDL_SetRenderDrawColor(nativeRenderer, 255, 0, 0, 255);
+//    SDL_RenderDrawLineF(nativeRenderer, b->getColliderCenterPosition().x,
+//                        b->getColliderCenterPosition().y,
+//                        e->getColliderCenterPosition().x,
+//                        e->getColliderCenterPosition().y);
+//    SDL_RenderFlush(nativeRenderer);
+//#endif
 
     drawStars(renderer, starManager->tga(), starManager->stars(),
               starManager->starCount());

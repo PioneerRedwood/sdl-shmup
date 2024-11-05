@@ -14,12 +14,9 @@ float Enemy::s_colliderRadius = 0.0f;
 
 Enemy::Enemy() : GameObject() {
   m_tag = GameObjectTagEnemy;
-
-  m_debugColliderPoints = new SDL_FPoint[180];
-
-  m_visible = true;
-
-  m_state = EnemyStateMove;
+  m_isVisible = true;
+  m_state = EnemyStateIdle;
+  m_debugColliderPoints = new Vector2[180];
 }
 
 Enemy::~Enemy() {
@@ -36,7 +33,7 @@ void Enemy::onCollided(const GameObject& target) {
     }
     case GameObjectTagBullet: {
       // TODO: 데미지 받음
-      visible(false);
+      isVisible(false);
       m_state = EnemyStateHit;
       break;
     }
@@ -46,27 +43,30 @@ void Enemy::onCollided(const GameObject& target) {
   }
 }
 
-void Enemy::updateCollidePosition(SDL_FPoint pos) {
-  if (m_collider != nullptr && m_collider->position.x == pos.x &&
-      m_collider->position.y == pos.y) {
-    return;
+/// @brief 콜라이더 설정. 이미 존재하면 주어진 값으로 기존 콜라이더 값 변경.
+///  단 반지름은 전역적인 값 유지. 
+void Enemy::setCollider(float x, float y, float radius) {
+  if(m_collider == nullptr) {
+    m_collider = new CircleCollider();
   }
-
-  setCollider(pos.x, pos.y, s_colliderRadius);
-
-  // 충돌체 원형 좌표 수정
-  Math::createCirclePoints(m_debugColliderPoints, pos.x, pos.y,
-                           s_colliderRadius);
+  m_collider->position = { x, y };
+  m_collider->radius = s_colliderRadius;
 }
 
+/// @brief 전역적으로 에너미 콜라이더의 반지름을 설정
 void Enemy::setColliderRadius(float radius) {
   s_colliderRadius = radius;
 }
 
-void Enemy::moveYPosColliderPoints(float deltaY) {
-  for(unsigned i = 0; i < 180; ++i) {
-    m_debugColliderPoints[i].y += deltaY;
-  }
+void Enemy::moveDebugColliderPoints(const Vector2& pos) {
+  Math::createCirclePoints(m_debugColliderPoints, pos.x, pos.y,
+                           s_colliderRadius);
+}
+
+Vector2 Enemy::nextPos(double delta) const {
+  double deltaSeconds = delta / 1000.0f;
+  return {(float)(m_position.x + m_speed * deltaSeconds),
+          (float)(m_position.y + m_speed * deltaSeconds)};
 }
 
 }  // namespace shmup

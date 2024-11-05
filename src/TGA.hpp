@@ -76,7 +76,7 @@ public:
 private:
     TGAHeader m_header;
 
-    RGBA* m_pixel_data = nullptr;
+    RGBA* m_pixelData = nullptr;
     
     SDL_Texture* m_texture = nullptr;
 };

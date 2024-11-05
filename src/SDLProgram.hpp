@@ -52,7 +52,7 @@ private:
 
   SDL_Window* m_window = nullptr;
 
-  SDLRenderer* m_renderer;
+  SDLRenderer* m_renderer = nullptr;
 
   bool m_neededQuit = false;
 

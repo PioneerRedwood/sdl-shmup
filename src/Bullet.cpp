@@ -14,7 +14,8 @@ float s_bulletSpeed = 300.0f;
 
 Bullet::Bullet() : GameObject() {
   // 기본값 설정
-  m_size = {32.0f, 32.0f};
+  //m_size = {16.0f, 16.0f};
+  m_size = {16.0f, 16.0f};
   
   setCollider(0.0f, 0.0f, 0.0f);
   position({ 0.0f, 0.0f });
@@ -22,9 +23,15 @@ Bullet::Bullet() : GameObject() {
   m_isVisible = false;
   m_tag = GameObjectTagBullet;
   m_speed = s_bulletSpeed;
+
+  m_debugPoints = new Vector2[180];
 }
 
-Bullet::~Bullet() {}
+Bullet::~Bullet() {
+  if (m_debugPoints) {
+    delete[] m_debugPoints;
+  }
+}
 
 void Bullet::speed(float speed) { m_speed = speed; }
 
@@ -34,11 +41,17 @@ void Bullet::state(BulletState state) { m_state = state; }
 
 BulletState Bullet::state() const { return m_state; }
 
+Vector2* Bullet::debugPoints() const { return m_debugPoints; }
+
 void Bullet::onCollided(const GameObject& target) {
   if (target.tag() == GameObjectTagEnemy) {
     m_state = BulletStateIdle;
     // TODO: 맞았을 때 처리
     m_isVisible = false;
+
+    // 먼 곳으로 옮기기
+    m_position = { -1000.0f, -1000.0f };
+    m_collider->position = { -1000.0f, -1000.0f };
   }
 }
 

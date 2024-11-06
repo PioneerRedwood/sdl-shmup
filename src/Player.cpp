@@ -24,13 +24,15 @@ constexpr auto s_bulletFilepath = "../../resources/bullet.tga";
 #endif
 
 unsigned s_bulletMaxYPos = 0;
-float s_bulletColliderRadius = 5.0f;
+float s_bulletColliderRadius = 3.0f;
 unsigned s_maximumBulletCount = 30; // 총알 최대 갯수
 
 Vector2 s_playerSpawnPosition;
 float s_playerMoveStepSize = 100.0f;
 float s_playerSpeed = 1.25f;
 float s_playerColliderRadius = 0.0f;
+float s_playerFireDelay = 50.0f;
+float s_playerMaxXPos = 0.0f;
 
 Player::Player() : GameObject() { m_tag = GameObjectTagPlayer; }
 
@@ -61,7 +63,7 @@ bool Player::loadResource(SDL_Renderer* renderer) {
     SDL_assert(false);
     return false;
   }
-  s_playerColliderRadius = m_planeTexture->header()->width / 4;
+  s_playerColliderRadius = (float)m_planeTexture->header()->width / 4;
 
   setCollider(0.0f, 0.0f, s_playerColliderRadius);
 
@@ -82,6 +84,8 @@ bool Player::loadResource(SDL_Renderer* renderer) {
 
   s_bulletMaxYPos =
       SDLProgram::instance()->height() - m_bulletTexture->header()->height;
+
+  s_playerMaxXPos = SDLProgram::instance()->width() - m_planeTexture->header()->width;
 
   // 임시로 총알 갯수 제한
   m_bulletCount = s_maximumBulletCount;
@@ -137,20 +141,26 @@ void Player::updateState(double delta) {
     updatePosition(m_position.x, m_position.y);
   }
 
-  // TODO: 발사
   m_elapsedFireTime += delta;
 
-  // 30밀리초에 한번 씩 발사
-  if (m_elapsedFireTime >= 30.0f) {
+  if (m_elapsedFireTime >= s_playerFireDelay) {
     // std::cout << "Player::updateState fire weapon! " << m_elapsedFireTime << std::endl ;
     for (unsigned i = 0; i < m_bulletCount; ++i) {
       Bullet* b = &m_bullets[i];
       if (b->state() == BulletStateIdle) {
-        // 총구 위치
-        b->position({m_position.x + (m_planeTexture->header()->width / 2), m_position.y - 5.0f});
+        Vector2 pos = {
+          m_position.x + (m_planeTexture->header()->width / 2),
+          m_position.y - 5.0f
+        };
+        b->position(pos);
         b->isVisible(true);
-        b->setCollider(b->position().x + b->size().x / 2, b->position().y + b->size().y / 2, s_bulletColliderRadius);
+        pos = {
+          b->position().x + b->size().x / 2, 
+          b->position().y + b->size().y / 2
+        };
+        b->setCollider(pos.x, pos.y, s_bulletColliderRadius);
         b->state(BulletStateFired);
+        Math::createCirclePoints(b->debugPoints(), pos.x, pos.y, s_bulletColliderRadius);
         break;
       }
     }
@@ -164,6 +174,20 @@ void Player::updateState(double delta) {
 /// @brief 지정한 방향대로 속도와 곱하여 목표 지점을 설정하게 된다
 /// @param direction -1.0f ~ 1.0f
 void Player::move(int direction) {
+  //const float maxGapFromEdge = 5.0f;
+  const float maxGapFromEdge = m_planeTexture->header()->width;
+  if (m_position.x <= 0.0f) {
+    m_isFlaggedToMove = true;
+    m_destPos.x = m_position.x + maxGapFromEdge;
+    return;
+  }
+
+  if (m_position.x >= s_playerMaxXPos) {
+    m_isFlaggedToMove = true;
+    m_destPos.x = m_position.x - maxGapFromEdge;
+    return;
+  }
+
   m_isFlaggedToMove = true;
   m_destPos.x = m_position.x + s_playerMoveStepSize * direction;
 
@@ -195,12 +219,15 @@ void Player::updateBulletPosition(double delta) {
 
         // 가장 근사한 위치로 충돌체 이동
         newPos = {
-          bullet->position().x + (m_bulletTexture->header()->width / 4), 
-          bullet->position().y + (m_bulletTexture->header()->height / 4)
+          bullet->position().x + bullet->size().x / 2,
+          bullet->position().y + bullet->size().y / 2
         };
         bullet->setCollider(newPos.x, newPos.y, s_bulletColliderRadius);
+
+        Math::createCirclePoints(bullet->debugPoints(), newPos.x, newPos.y, s_bulletColliderRadius);
       } else {
         // 총알은 현재 위치에서 속도에 맞춰 -Y 방향으로 이동(윗쪽)
+        float deltaYPos = bullet->position().y;
         float yPos = bullet->position().y - (bullet->speed() * deltaSeconds);
         bullet->isVisible(true);
         bullet->state(BulletStateFired);
@@ -216,6 +243,11 @@ void Player::updateBulletPosition(double delta) {
           bullet->position().y + (m_bulletTexture->header()->height / 4)
         };
         bullet->setCollider(newPos.x, newPos.y, s_bulletColliderRadius);
+
+        deltaYPos = deltaYPos - yPos;
+        for (unsigned i = 0; i < 180; ++i) {
+          bullet->debugPoints()[i].y -= deltaYPos;
+        }
       }
       //std::cout << "Player::updateBulletPosition 2>> " << i << " " << bullet->position().y << std::endl;
     }

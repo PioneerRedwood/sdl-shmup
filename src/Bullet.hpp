@@ -35,10 +35,14 @@ public:
 
   BulletState state() const;
 
+  Vector2* debugPoints() const;
+
 private:
   BulletState m_state = BulletStateIdle;
   
   float m_speed;
+
+  Vector2* m_debugPoints = nullptr;
 };
 
 }

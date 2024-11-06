@@ -78,22 +78,38 @@ void drawEnemies(shmup::SDLRenderer& renderer,
 
 void drawColliderLayers(shmup::SDLRenderer& renderer,
                         const shmup::Enemy* enemies, unsigned enemyCount,
-                        const shmup::Vector2* playerColliderPoints) {
+                        const shmup::Vector2* playerColliderPoints,
+                        const shmup::Bullet* bullets, unsigned bulletCount) {
+  SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
+
   // Enemy 충돌체 레이어 그리기
   for (unsigned i = 0; i < enemyCount; ++i) {
     const shmup::Enemy* enemy = &enemies[i];
+    if (enemy == nullptr) {
+      break;
+    }
+
     if (enemy->isVisible() == false) {
       continue;
     }
-    SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
     SDL_RenderDrawPointsF(renderer.native(), (const SDL_FPoint*)enemy->debugColliderPoints(), 180);
   }
 
   // Player 충돌체 레이어 그리기
-  SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
   SDL_RenderDrawPointsF(renderer.native(), (const SDL_FPoint*)playerColliderPoints, 180);
 
   // Bullet 충돌체 레이어 그리기
+  for (unsigned i = 0; i < bulletCount; ++i) {
+    const shmup::Bullet* bullet = &bullets[i];
+    if (bullet == nullptr) {
+      break;
+    }
+
+    if (bullet->isVisible() == false) {
+      continue;
+    }
+    SDL_RenderDrawPointsF(renderer.native(), (const SDL_FPoint*)bullet->debugPoints(), 180);
+  }
 }
 
 /// @brief 충돌 검사하면서 각 적나 총알의 상태가 변경되도록 플래그 설정
@@ -150,7 +166,7 @@ int main(int argc, char** argv) {
       false) {
     return 1;
   }
-  starManager->spawnStars(10);
+  starManager->spawnStars(100);
 
   shmup::Player* player = new shmup::Player();
   if (player->loadResource(nativeRenderer) == false) {
@@ -221,7 +237,8 @@ int main(int argc, char** argv) {
                 enemyManager->enemyCount());
     drawColliderLayers(renderer, enemyManager->enemies(),
                        enemyManager->enemyCount(),
-                       player->debugColliderPoints());
+                       player->debugColliderPoints(),
+                       player->bullets(), player->bulletCount());
 
     renderer.present();
 

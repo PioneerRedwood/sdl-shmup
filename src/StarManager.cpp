@@ -17,8 +17,8 @@ constexpr auto s_starFilepath = "../resources/star.tga";
 constexpr auto s_starFilepath = "../../resources/star.tga";
 #endif
 
-unsigned s_starMaxXPos = 0;
-unsigned s_starMaxYPos = 0;
+float s_starMaxXPos = 0.0f;
+float s_starMaxYPos = 0.0f;
 
 StarManager::StarManager() {}
 
@@ -56,7 +56,7 @@ void StarManager::setStarRandomPos(Star* star) {
 
   value = {
     (float)(rand() / ((RAND_MAX + 1u) / s_starMaxXPos)),  // 0 ~ s_starMaxXPos
-    (float)(rand() / ((RAND_MAX + 1u) / s_starMaxYPos)),  // 0 ~ s_starMaxYPos
+    (float)(-100.0f + rand() / ((RAND_MAX + 1u) / s_starMaxYPos)),  // -100 ~ s_starMaxYPos
   };
   star->position(value);
 

@@ -21,11 +21,13 @@ constexpr auto s_enemyFilepath = "../../resources/enemy.tga";
 #endif
 
 // 아래 값들은 게임 시작 데이터로 분류 가능
-float s_enemyMaxXPos = 0.0f;    // 최대 적 X 좌표
-float s_enemyMaxYPos = 0.0f;    // 최대 적 Y 좌표
-float s_enemySpeed = 30.0f;     // 밀리초당 이동 거리
-unsigned s_enemyMaxCount = 30;  // 최대 적 개수
-double s_spawnDelay = 1000.0f;  // 적 스폰 빈도 수 (밀리초)
+unsigned s_enemyMaxXPos = 0;
+unsigned s_enemyMaxYPos = 0;
+float s_enemySpeed = 30.0f;
+unsigned s_enemyMaxCount = 30;
+unsigned s_enemyDebugCircleColliderSteps = 180;
+float s_enemyCircleColliderRadius = 3.0f;
+double s_spawnDelay = 1500.0f; // 1.5초 당 한번 씩 Idle 상태의 적을 생성
 
 EnemyManager::EnemyManager() {}
 
@@ -51,7 +53,7 @@ bool EnemyManager::init(SDL_Renderer* renderer, int width, int height) {
   s_enemyMaxXPos = width - m_texture->header()->width;
   s_enemyMaxYPos = height - m_texture->header()->height * 2; // 밑에 완전히 사라질 정도
 
-  // 적 배열 처음 생성
+  // 에너미 배열 처음 생성
   m_enemies = new Enemy[s_enemyMaxCount];
   if(m_enemies == nullptr) {
     std::cout << "EnemyManager allocate pre enemy array failed \n";
@@ -76,9 +78,10 @@ void EnemyManager::setEnemyRandomPos(Enemy* enemy) {
   }
 
   // x: 0 ~ s_enemyMaxXPos 사이의 값으로 설정
+  // y: 임의로 -20.0
   Vector2 value = {(float)(rand() / ((RAND_MAX + 1u) /
                                      s_enemyMaxXPos)),  
-                   0.0f};
+                   -20.0f};
   enemy->position(value);
 
   // 충돌체 위치 업데이트
@@ -91,11 +94,10 @@ void EnemyManager::setEnemyRandomPos(Enemy* enemy) {
   enemy->moveDebugColliderPoints(colliderPos);
 }
 
-/// @brief 적 생성
+/// @brief 에너미 생성
 void EnemyManager::spawnEnemy() {
   if(m_enemies == nullptr) return;
-
-  // Idle 상태인 적를 선택
+  // Idle 상태인 에너미를 선택
   Enemy* enemy = nullptr;
   for(unsigned i = 0; i < m_enemyCount; ++i) {
     if(m_enemies[i].state() == EnemyStateIdle) {
@@ -103,9 +105,6 @@ void EnemyManager::spawnEnemy() {
       break;
     }
   }
-  if (enemy == nullptr) return;
-
-  std::cout << "EnemyManager::spawnEnemy called\n";
 
   // 랜덤한 위치 { randomX, -20.0f } 같은 위치로 이동
   // 콜라이더 위치 변경
@@ -114,11 +113,11 @@ void EnemyManager::spawnEnemy() {
   // 속도 업데이트
   enemy->speed((float)(10.0f + rand() / ((RAND_MAX + 1u) / 25)));
 
-  // 적 상태 변경
+  // 에너미 상태 변경
   enemy->state(EnemyStateMove);
 
   // 최종 목적지 설정
-  enemy->destination({ enemy->position().x, s_enemyMaxYPos });
+  enemy->destination({ enemy->position().x, 0.0f });
 }
 
 void EnemyManager::updateState(double delta) {
@@ -126,35 +125,30 @@ void EnemyManager::updateState(double delta) {
     return;
   }
 
-  m_lastTimeEnemySpawned += delta;
+  double deltaSeconds = delta / 1000.0f;
+  m_lastTimeEnemySpawned += deltaSeconds;
 
   if(m_lastTimeEnemySpawned >= s_spawnDelay) {
-    // 새로운 적 스폰
+    // 새로운 에너미 스폰
     spawnEnemy();
-    m_lastTimeEnemySpawned = 0.0f;
   }
 
-  // 적 배열 돌면서 "움직임" 상태인 적 이동
-  double deltaSeconds = delta / 1000.0f;
+  // 에너미 배열 돌면서 "움직임" 상태인 에너미 이동
   for(unsigned i = 0; i < m_enemyCount; ++i) {
     Enemy* enemy = &m_enemies[i];
     switch (enemy->state()) {
       case EnemyStateMove: {
-        if (std::fabsf(enemy->position().y - enemy->destination().y) <= 0.001f) {
+        float deltaYPos = enemy->position().y;
+        float newYPos =
+            enemy->position().y * (1 - deltaSeconds * s_enemySpeed) +
+            enemy->destination().y * deltaSeconds * s_enemySpeed;
+        if (std::fabsf(enemy->position().y - newYPos) <= 0.001f) {
           // 초기 위치로
           enemy->isVisible(false);
           enemy->state(EnemyStateIdle);
           setEnemyRandomPos(enemy);
           continue;
         }
-        enemy->isVisible(true);
-
-        // 새로운 위치
-        float deltaYPos = enemy->position().y;
-        //float newYPos =
-        //    enemy->position().y * (1 - deltaSeconds * s_enemySpeed) +
-        //    enemy->destination().y * deltaSeconds * s_enemySpeed;
-        float newYPos = enemy->position().y + deltaSeconds * s_enemySpeed;
         enemy->position({enemy->position().x, newYPos});
 
         // 충돌체 위치 업데이트

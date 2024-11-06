@@ -10,18 +10,13 @@
 
 namespace shmup {
 
-// 적 관련 속성
-float Enemy::s_enemyColliderRadius = 0.0f;
+float Enemy::s_colliderRadius = 0.0f;
 
 Enemy::Enemy() : GameObject() {
   m_tag = GameObjectTagEnemy;
-  m_isVisible = false;
+  m_isVisible = true;
   m_state = EnemyStateIdle;
   m_debugColliderPoints = new Vector2[180];
-  
-  // 콜라이더 위치는 오브젝트에 의해 변경됨
-  setCollider(0.0f, 0.0f, s_enemyColliderRadius);
-  position({ 0.0f, 0.0f });
 }
 
 Enemy::~Enemy() {
@@ -55,17 +50,17 @@ void Enemy::setCollider(float x, float y, float radius) {
     m_collider = new CircleCollider();
   }
   m_collider->position = { x, y };
-  m_collider->radius = s_enemyColliderRadius;
+  m_collider->radius = s_colliderRadius;
 }
 
-/// @brief 전역적으로 적 콜라이더의 반지름을 설정
+/// @brief 전역적으로 에너미 콜라이더의 반지름을 설정
 void Enemy::setColliderRadius(float radius) {
-  s_enemyColliderRadius = radius;
+  s_colliderRadius = radius;
 }
 
 void Enemy::moveDebugColliderPoints(const Vector2& pos) {
   Math::createCirclePoints(m_debugColliderPoints, pos.x, pos.y,
-                           s_enemyColliderRadius);
+                           s_colliderRadius);
 }
 
 Vector2 Enemy::nextPos(double delta) const {

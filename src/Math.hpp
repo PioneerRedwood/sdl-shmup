@@ -17,19 +17,9 @@ struct Vector2 {
   float x;
   float y;
 
-  Vector2();
-  Vector2(float x, float y);
-
   Vector2 operator+(const Vector2& other) const;
   Vector2 operator*(float scalar) const;
   Vector2& operator=(const Vector2& other);
-  Vector2 operator-(const Vector2& other) const;
-
-  /// @brief 벡터의 크기 계산
-  float magnitude() const;
-
-  /// @brief 벡터 노멀라이즈 (정규화)
-  Vector2 normalized() const;
 };
 
 /// @brief 간단한 수학 메서드 제공

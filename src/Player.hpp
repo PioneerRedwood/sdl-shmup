@@ -50,9 +50,7 @@ class Player : public GameObject {
 
   TGA* m_bulletTexture = nullptr;
 
-  bool m_isFlaggedToMove = false;
-
-  Vector2 m_destPos;
+  float m_queuedMovePositionX = 0.0f;
 
   Bullet* m_bullets = nullptr;
 

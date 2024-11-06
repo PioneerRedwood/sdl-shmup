@@ -26,9 +26,11 @@ public:
   /// @brief 충돌 시 콜백
   void onCollided(const GameObject& target) override;
 
+  void setColliderPosition(Vector2 pos);
+
   void setCollider(float x, float y, float radius) override;
 
-  /// @brief 적의 모든 콜라이더의 반지름은 공유됨
+  /// @brief 에너미의 모든 콜라이더의 반지름은 공유됨
   static void setColliderRadius(float radius);
 
   Vector2 nextPos(double delta) const;
@@ -58,7 +60,7 @@ private:
 
   EnemyState m_state = EnemyStateIdle;
 
-  static float s_enemyColliderRadius;
+  static float s_colliderRadius;
 
   Vector2 m_destination;
 };

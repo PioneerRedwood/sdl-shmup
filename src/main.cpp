@@ -165,12 +165,12 @@ int main(int argc, char** argv) {
   program->bindKeyEvent([&player, &program](SDL_Event* event) {
     switch (event->key.keysym.sym) {
       case SDLK_RIGHT: {
-        std::cout << "KeyEvent move right >> \n";
+        // std::cout << "KeyEvent move right >> \n";
         player->move(1);
         break;
       }
       case SDLK_LEFT: {
-        std::cout << "KeyEvent move left >> \n";
+        // std::cout << "KeyEvent move left >> \n";
         player->move(-1);
         break;
       }
@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
        program->handleEvent(&event);
     }
 
-    std::cout << "Delta: " << program->delta() << std::endl;
+    // std::cout << "Delta: " << program->delta() << std::endl;
 
     // 각 상태 변화
     starManager->updateState(program->delta());

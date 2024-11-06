@@ -28,8 +28,8 @@ float s_bulletColliderRadius = 5.0f;
 unsigned s_maximumBulletCount = 30; // 총알 최대 갯수
 
 Vector2 s_playerSpawnPosition;
-int s_playerMoveStepSize = 5;
-int s_playerSpeed = 10;
+float s_playerMoveStepSize = 100.0f;
+float s_playerSpeed = 1.25f;
 float s_playerColliderRadius = 0.0f;
 
 Player::Player() : GameObject() { m_tag = GameObjectTagPlayer; }
@@ -111,18 +111,22 @@ void Player::updatePosition(float x, float y) {
 /// @brief 델타 타임을 기반으로 상태 업데이트
 /// @param delta
 void Player::updateState(double delta) {
-  // TODO: 위치 이동
-  if (m_queuedMovePositionX != 0.0f) {
-    // 부드러운 보간을 위해서 delta 값을 속도에 따른 이동 시간에 맞는 값으로
-    // 변경
-    float deltaSeconds = delta / 1000.0f;
+  // 위치 이동
+  if (m_isFlaggedToMove) {
     float prevXPos = m_position.x;
-    m_position.x = m_position.x * (1 - deltaSeconds * s_playerSpeed) +
-                   m_queuedMovePositionX * deltaSeconds * s_playerSpeed;
 
-    if (std::fabsf(m_position.x - m_queuedMovePositionX) < 0.001f) {
-      m_position.x = m_queuedMovePositionX;
-      m_queuedMovePositionX = 0.0f;
+    // 방향 구하기
+    Vector2 direction = (m_destPos - m_position).normalized();
+    // 해당 프레임에서 얼마나 이동해야 하는지 구하기
+    float magnitude = s_playerSpeed * delta;
+    Vector2 movement = direction * magnitude;
+
+    m_position.x = m_position.x + movement.x;
+
+    if((m_destPos - m_position).magnitude() < magnitude) {
+      m_position.x = m_destPos.x;
+      m_destPos.x = 0.0f;
+      m_isFlaggedToMove = false;
     }
 
     for (unsigned i = 0; i < 180; ++i) {
@@ -160,8 +164,10 @@ void Player::updateState(double delta) {
 /// @brief 지정한 방향대로 속도와 곱하여 목표 지점을 설정하게 된다
 /// @param direction -1.0f ~ 1.0f
 void Player::move(int direction) {
-  m_queuedMovePositionX = m_position.x + s_playerMoveStepSize * direction;
-  std::cout << "Player::move " << direction << " dst: " << m_queuedMovePositionX
+  m_isFlaggedToMove = true;
+  m_destPos.x = m_position.x + s_playerMoveStepSize * direction;
+
+  std::cout << "Player::move called " << m_position.x << " > " << m_destPos.x
             << std::endl;
 }
 

@@ -27,6 +27,19 @@ Vector2& Vector2::operator=(const Vector2& other) {
   return *this;
 }
 
+Vector2 Vector2::operator-(const Vector2& other) const {
+  return { x - other.x, y - other.y };
+}
+
+float Vector2::magnitude() const {
+  return sqrtf(x * x + y * y);
+}
+
+Vector2 Vector2::normalized() const {
+  float mag = magnitude();
+  return { x / mag, y / mag };
+}
+
 float Math::distance(const Vector2& a, const Vector2& b) {
   return (float)std::sqrt(std::fabsf(a.x - b.x) * std::fabsf(a.x - b.x) +
                           std::fabsf(a.y - b.y) * std::fabsf(a.y - b.y));

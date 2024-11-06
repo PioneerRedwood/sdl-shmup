@@ -43,7 +43,7 @@ private:
   void setStarRandomPos(Star* star);
 
 private:
-  TGA* m_tga;
+  TGA* m_tga = nullptr;
 
   Star* m_stars = nullptr;
 

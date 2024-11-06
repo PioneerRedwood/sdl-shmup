@@ -41,7 +41,7 @@ private:
   void setEnemyRandomPos(Enemy* enemy);
 
 private:
-  TGA* m_texture;
+  TGA* m_texture = nullptr;
 
   Enemy* m_enemies = nullptr;
 

@@ -70,17 +70,18 @@ void StarManager::spawnStars(unsigned count) {
   SDL_assert(m_stars != nullptr);
   
   for (unsigned i = 0; i < count; ++i) {
-    setStarRandomPos(&m_stars[i]);
+    Star* star = &m_stars[i];
+    star->isVisible(true);
+    setStarRandomPos(star);
   }
 }
 
 void StarManager::updateState(float delta) {
-  SDL_assert(m_stars != nullptr);
+  if (m_stars == nullptr) return;
 
   //  std::cout << "Update position: delta " << delta << std::endl;
   for (unsigned i = 0; i < m_starCount; ++i) {
     Star* star = &m_stars[i];
-    // 지나치게 빠르게 움직이는 것을 방지
     float yPos = star->position().y + (star->speed * (delta / 16.0f));
 
     if (yPos >= s_starMaxYPos) {

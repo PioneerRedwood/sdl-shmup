@@ -36,7 +36,7 @@ public:
   BulletState state() const;
 
 private:
-  BulletState m_state;
+  BulletState m_state = BulletStateIdle;
   
   float m_speed;
 };

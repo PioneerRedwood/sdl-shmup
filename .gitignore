@@ -3,3 +3,50 @@
 
 # cmake build 
 build/*
+
+# Build 결과물 및 임시 파일 무시
+bin/
+obj/
+
+# Visual Studio 관련 파일 무시
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# 빌드 파일 무시
+*.exe
+# *.dll
+*.obj
+*.pdb
+*.cache
+*.ilk
+*.log
+*.nupkg
+*.snk
+*.vscode/*
+*.suo
+*.sdf
+*.ipch
+*.tlog
+*.lastbuildstate
+*.idb
+
+# NuGet 패키지 및 기타 임시 파일 무시
+packages/
+*.ncrunchsolution
+*.ncrunchproject
+*.ntvs_analysis.dat
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Rider와 관련된 설정 무시 (JetBrains Rider 사용 시)
+.idea/
+*.sln.iml
+
+# 기본적인 macOS, Windows 임시 파일
+.DS_Store
+Thumbs.db

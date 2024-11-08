@@ -9,9 +9,11 @@
 #pragma once
 
 #include <SDL.h>
+
 #include <RGBA.hpp>
-#include "TGA.hpp"
+
 #include "GameObject.hpp"
+#include "TGA.hpp"
 
 namespace shmup {
 
@@ -22,14 +24,12 @@ struct Star : public GameObject {
 };
 
 class StarManager {
-public:
+ public:
   StarManager();
 
   ~StarManager();
 
-  bool init(SDL_Renderer* renderer, int width, int height);
-
-  void spawnStars(unsigned count);
+  bool init(SDL_Renderer* renderer, int width, int height, unsigned starCount);
 
   void updateState(float delta);
 
@@ -39,16 +39,19 @@ public:
 
   unsigned starCount() const;
 
-private:
+ private:
   void setStarRandomPos(Star* star);
 
-private:
+ private:
   TGA* m_tga = nullptr;
 
   Star* m_stars = nullptr;
 
   unsigned m_starCount = 0;
+
+  double m_lastStarSpawnTime = 0.0f;
+
+  double m_starSpawnDelay = 0.0f;
 };
 
-}
-
+}  // namespace shmup

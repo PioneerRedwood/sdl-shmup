@@ -40,6 +40,8 @@ void Enemy::onCollided(const GameObject& target) {
       // TODO: 데미지 받음
       isVisible(false);
       m_state = EnemyStateHit;
+      position({ 1000.0f, 1000.0f });
+      setCollider(1000.0f, 1000.0f, s_enemyColliderRadius);
       break;
     }
     default: {
@@ -48,8 +50,6 @@ void Enemy::onCollided(const GameObject& target) {
   }
 }
 
-/// @brief 콜라이더 설정. 이미 존재하면 주어진 값으로 기존 콜라이더 값 변경.
-///  단 반지름은 전역적인 값 유지. 
 void Enemy::setCollider(float x, float y, float radius) {
   if(m_collider == nullptr) {
     m_collider = new CircleCollider();
@@ -58,7 +58,6 @@ void Enemy::setCollider(float x, float y, float radius) {
   m_collider->radius = s_enemyColliderRadius;
 }
 
-/// @brief 전역적으로 적 콜라이더의 반지름을 설정
 void Enemy::setColliderRadius(float radius) {
   s_enemyColliderRadius = radius;
 }
@@ -72,6 +71,23 @@ Vector2 Enemy::nextPos(double delta) const {
   double deltaSeconds = delta / 1000.0f;
   return {(float)(m_position.x + m_speed * deltaSeconds),
           (float)(m_position.y + m_speed * deltaSeconds)};
+}
+
+Vector2 Enemy::getColliderCenterByDelta(double delta) const {
+  if(m_state == EnemyStateMove) {
+    float magnitude = m_speed * delta;
+    Vector2 pos = { m_collider->position.x, m_collider->position.y + magnitude };
+
+    // 목적지에 도착을 했으면 목적지 위치의 충돌체 중심 좌표를 반환
+    if((m_destination - pos).magnitude() <= magnitude) {
+      // return { m_destination.x + (m_size.x / 2), m_destination.y + (m_size.y / 2) };
+      // 목적지에 도착했다면 사라져있을 것이므로 검사하는 것은 의미가 없음
+      return { -1.0f, -1.0f };
+    } else {
+      return pos;
+    }
+  }
+  return m_collider->position;
 }
 
 }  // namespace shmup

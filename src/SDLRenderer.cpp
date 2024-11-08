@@ -26,6 +26,13 @@ bool SDLRenderer::init(SDL_Window* window) {
     std::cout << "SDL_CreateRenderer failed error: " << SDL_GetError() << std::endl;
     return false;
   }
+
+  // 전체 프레임의 픽셀을 복사할 수 있을 만한 크기의 버퍼를 생성
+  // 크기는 지정한 최대 텍스처 크기인 sizeof(RGBA) 4 * 128 * 128 = 64 KB
+  m_pixelBuffer = new RGBA[128 * 128];
+  if(m_pixelBuffer == nullptr) {
+    return false;
+  }
   return true;
 }
 
@@ -53,13 +60,15 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
     return;
   }
 
-  RGBA* pixels = new RGBA[tga.header()->width * tga.header()->height];
-  if (pixels == nullptr) {
+  // 만약 미리 정해놓은 텍스처 최대 크기 보다 텍스처가 크면?
+  if(tga.header()->width > 128 && tga.header()->height > 128) {
+    std::cout << "TGA texture size is too big to read pixels into the buffer \n";
+    // 그냥 텍스처로 그리기?
     return;
   }
-  const int pitch = tga.header()->width * sizeof(RGBA);
 
-  if (SDL_RenderReadPixels(m_renderer, &rect, SDL_PIXELFORMAT_BGRA32, pixels,
+  const int pitch = tga.header()->width * sizeof(RGBA);
+  if (SDL_RenderReadPixels(m_renderer, &rect, SDL_PIXELFORMAT_BGRA32, m_pixelBuffer,
                            pitch) != 0) {
     std::cout << "readPixels failed " << SDL_GetError() << std::endl;
     return;
@@ -71,15 +80,15 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
       RGBA blended = {0};
       switch (m_currentBlendMode) {
         case SDL_BLENDMODE_BLEND: {
-          blended = blend::alpha(tgaPixels[offset], pixels[offset]);
+          blended = blend::alpha(tgaPixels[offset], m_pixelBuffer[offset]);
           break;
         }
         case SDL_BLENDMODE_ADD: {
-          blended = blend::additive(tgaPixels[offset], pixels[offset]);
+          blended = blend::additive(tgaPixels[offset], m_pixelBuffer[offset]);
           break;
         }
         case SDL_BLENDMODE_MUL: {
-          blended = blend::multiply(tgaPixels[offset], pixels[offset]);
+          blended = blend::multiply(tgaPixels[offset], m_pixelBuffer[offset]);
           break;
         }
         default: {
@@ -93,7 +102,6 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
       SDL_RenderDrawPoint(m_renderer, rect.x + w, rect.y + h);
     }
   }
-  delete[] pixels;
 }
 
 void SDLRenderer::present() { SDL_RenderPresent(m_renderer); }

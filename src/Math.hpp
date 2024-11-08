@@ -24,6 +24,7 @@ struct Vector2 {
   Vector2 operator*(float scalar) const;
   Vector2& operator=(const Vector2& other);
   Vector2 operator-(const Vector2& other) const;
+  bool operator==(const Vector2& other) const;
 
   /// @brief 벡터의 크기 계산
   float magnitude() const;

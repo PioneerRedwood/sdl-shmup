@@ -70,22 +70,6 @@ bool SDLProgram::neededQuit() const {
   return m_neededQuit;
 }
 
-void SDLProgram::handleEvent(SDL_Event* event) {
-  switch (event->type) {
-    case SDL_QUIT: {
-      m_neededQuit = true;
-      break;
-    }
-    case SDL_KEYDOWN: {
-      m_keyEventCallback(event);
-      break;
-    }
-    default: {
-      break;
-    }
-  }
-}
-
 unsigned SDLProgram::width() const {
   return m_width;
 }
@@ -103,10 +87,6 @@ void SDLProgram::updateTime() {
 
 double SDLProgram::delta() const {
   return m_delta;
-}
-
-void SDLProgram::bindKeyEvent(std::function<void(SDL_Event*)>&& callback) {
-    m_keyEventCallback = std::move(callback);
 }
 
 }  // namespace shmup

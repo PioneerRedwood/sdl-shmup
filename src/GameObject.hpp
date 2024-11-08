@@ -38,6 +38,8 @@ class GameObject {
 
   bool hasCollider() const;
 
+  const CircleCollider* collider() { return m_collider; }
+
   Vector2 getColliderCenterPosition() const;
 
   void tag(GameObjectTag tag) { m_tag = tag; }
@@ -62,13 +64,13 @@ class GameObject {
   static bool isCollided(const GameObject& a, const GameObject& b);
 
  protected:
-  Vector2 m_position;
+  Vector2 m_position = { 0.0f, 0.0f };
 
-  Vector2 m_size;
+  Vector2 m_size = { 0.0f, 0.0f };
 
   GameObjectTag m_tag = GameObjectTagNone;
 
-  bool m_isVisible = true;
+  bool m_isVisible = false;
 
   CircleCollider* m_collider = nullptr;
 };

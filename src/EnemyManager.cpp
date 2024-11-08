@@ -23,8 +23,8 @@ constexpr auto s_enemyFilepath = "../../resources/enemy.tga";
 // 아래 값들은 게임 시작 데이터로 분류 가능
 float s_enemyMaxXPos = 0.0f;    // 최대 적 X 좌표
 float s_enemyMaxYPos = 0.0f;    // 최대 적 Y 좌표
-float s_enemySpeed = 0.25f;     // 밀리초당 이동 거리 (기본 30.0f)
-unsigned s_enemyMaxCount = 300;  // 최대 적 개수 (30)
+float s_enemySpeed = 0.01f;     // 밀리초당 이동 거리 (기본 30.0f)
+unsigned s_enemyMaxCount = 1;  // 최대 적 개수 (30)
 double s_spawnDelay = 1000.0f;  // 적 스폰 빈도 수 (밀리초)
 
 EnemyManager::EnemyManager() {}
@@ -136,17 +136,12 @@ void EnemyManager::updateState(double delta) {
   }
 
   // 적 배열 돌면서 "움직임" 상태인 적 이동
-  double deltaSeconds = delta / 1000.0f;
   for(unsigned i = 0; i < m_enemyCount; ++i) {
     Enemy* enemy = &m_enemies[i];
     switch (enemy->state()) {
       case EnemyStateMove: {
         Vector2 currentPos = enemy->position();
-
-        // 방향 구하기
         Vector2 direction = (enemy->destination() - currentPos).normalized();
-
-        // 현재 프레임에서 얼마나 이동하는지
         float magnitude = s_enemySpeed * delta;
         Vector2 movement = direction * magnitude;
 
@@ -158,16 +153,15 @@ void EnemyManager::updateState(double delta) {
           enemy->isVisible(false);
           enemy->state(EnemyStateIdle);
           setEnemyRandomPos(enemy);
-          continue;
-        }
+        } else {
+          // 충돌체 위치 업데이트
+          Vector2 pos = enemy->getColliderCenterPosition();
+          enemy->setCollider(pos.x, pos.y + movement.y, 0.0f);
 
-        // 충돌체 위치 업데이트
-        Vector2 pos = enemy->getColliderCenterPosition();
-        enemy->setCollider(pos.x, pos.y + movement.y, 0.0f);
-
-        // DEBUG: 이 위치 이동은 Math::createCirclePoints 보다 빠를 것
-        for (unsigned i = 0; i < 180; ++i) {
-          enemy->debugColliderPoints()[i].y += movement.y;
+          // DEBUG: 이 위치 이동은 Math::createCirclePoints 보다 빠를 것
+          for (unsigned i = 0; i < 180; ++i) {
+            enemy->debugColliderPoints()[i].y += movement.y;
+          }
         }
         break;
       }

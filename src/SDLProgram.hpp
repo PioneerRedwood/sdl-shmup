@@ -9,8 +9,6 @@
 
 #include <SDL.h>
 
-#include <functional>
-
 #include "SDLRenderer.hpp"
 
 namespace shmup {
@@ -33,8 +31,6 @@ class SDLProgram {
 
   bool neededQuit() const;
 
-  void handleEvent(SDL_Event* event);
-
   unsigned width() const;
 
   unsigned height() const;
@@ -42,8 +38,6 @@ class SDLProgram {
   void updateTime();
 
   double delta() const;
-
-  void bindKeyEvent(std::function<void(SDL_Event*)>&& callback);
 
 private:
   SDLProgram() = default;
@@ -65,9 +59,6 @@ private:
   uint64_t m_lastTime = 0;
 
   double m_delta = 0;
-
-  // TODO: C style function으로 변경할 것
-  std::function<void(SDL_Event*)> m_keyEventCallback;
 };
 
 }  // namespace shmup

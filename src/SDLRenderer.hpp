@@ -48,6 +48,8 @@ class SDLRenderer {
   SDL_Renderer* m_renderer = nullptr;
 
   SDL_BlendMode m_currentBlendMode = SDL_BLENDMODE_NONE;
+
+  RGBA* m_pixelBuffer = nullptr;
 };
 
 }  // namespace shmup

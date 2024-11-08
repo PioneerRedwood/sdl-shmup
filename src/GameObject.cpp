@@ -95,11 +95,9 @@ bool GameObject::isCollided(const GameObject& a, const GameObject& b) {
         return false;
     }
 
-    // 지정한 태그가 아니라면 충돌 검사를 하지 않음
-    // int aTag = static_cast<int>(a.m_tag), bTag = static_cast<int>(b.m_tag);
-    // GameObjectTag xorResult = static_cast<GameObjectTag>(aTag ^ bTag);
-    int xorResult = a.m_tag ^ b.m_tag;
-    if(xorResult == 0x0011 || xorResult == 0x0110) {
+    // 태그 검사: 지정한 태그가 아니라면 충돌 검사를 하지 않음, 지금은 필요 없음
+    // int xorResult = a.m_tag ^ b.m_tag;
+    // if(xorResult == 0x0011 || xorResult == 0x0110) {
       float distance = Math::distance(a.m_collider->position, b.m_collider->position);
       if(distance <= (a.m_collider->radius + b.m_collider->radius)) {
         return true;
@@ -108,7 +106,7 @@ bool GameObject::isCollided(const GameObject& a, const GameObject& b) {
       //           << " To B: " <<  b.m_collider->position.x << ", " << b.m_collider->position.y 
       //           << "=> " << distance
       //           << " & sum of radius " << a.m_collider->radius + b.m_collider->radius << std::endl;
-    }
+    // }
     return false;
 }
 

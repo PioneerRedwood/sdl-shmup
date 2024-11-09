@@ -64,13 +64,13 @@ Vector2 Bullet::nextPos(double delta) const {
 Vector2 Bullet::getColliderCenterByDelta(double delta) const {
   if(m_state == BulletStateFired) {
     float magnitude = m_speed * delta;
-    Vector2 pos = { m_collider->position.x, m_collider->position.y + magnitude };
+    Vector2 pos = { m_collider->position.x, m_collider->position.y - magnitude };
 
     // 목적지에 도착을 했으면 목적지 위치의 충돌체 중심 좌표를 반환
     if ((m_destination - pos).magnitude() <= magnitude) {
       // return (m_destination + m_size);
       // 목적지 도착 시 충돌 검사는 의미가 없음
-      return {-1, -1};
+      return {-1.0f, -1.0f};
     } else {
       return pos;
     }

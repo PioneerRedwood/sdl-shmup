@@ -23,8 +23,8 @@ constexpr auto s_enemyFilepath = "../../resources/enemy.tga";
 // 아래 값들은 게임 시작 데이터로 분류 가능
 float s_enemyMaxXPos = 0.0f;    // 최대 적 X 좌표
 float s_enemyMaxYPos = 0.0f;    // 최대 적 Y 좌표
-float s_enemySpeed = 0.01f;     // 밀리초당 이동 거리 (기본 30.0f)
-unsigned s_enemyMaxCount = 1;  // 최대 적 개수 (30)
+float s_enemySpeed = 0.01f;     // 밀리초당 이동 거리
+unsigned s_enemyMaxCount = 20;  // 최대 적 개수 (30)
 double s_spawnDelay = 1000.0f;  // 적 스폰 빈도 수 (밀리초)
 
 EnemyManager::EnemyManager() {}
@@ -79,6 +79,7 @@ void EnemyManager::setEnemyRandomPos(Enemy* enemy) {
   Vector2 value = {(float)(rand() / ((RAND_MAX + 1u) /
                                      s_enemyMaxXPos)),  
                    0.0f};
+  // Vector2 value = { 190, 200 }; // macOS test
   enemy->position(value);
 
   // 충돌체 위치 업데이트
@@ -111,7 +112,8 @@ void EnemyManager::spawnEnemy() {
   setEnemyRandomPos(enemy);
 
   // 속도 업데이트
-  enemy->speed((float)(10.0f + rand() / ((RAND_MAX + 1u) / 25)));
+  // enemy->speed((float)(0.01f + rand() / ((RAND_MAX + 1u) / 2)));
+  enemy->speed(0.25f);
 
   // 적 상태 변경
   enemy->state(EnemyStateMove);
@@ -139,10 +141,11 @@ void EnemyManager::updateState(double delta) {
   for(unsigned i = 0; i < m_enemyCount; ++i) {
     Enemy* enemy = &m_enemies[i];
     switch (enemy->state()) {
+#if 1
       case EnemyStateMove: {
         Vector2 currentPos = enemy->position();
         Vector2 direction = (enemy->destination() - currentPos).normalized();
-        float magnitude = s_enemySpeed * delta;
+        float magnitude = enemy->speed() * delta;
         Vector2 movement = direction * magnitude;
 
         // 이동
@@ -155,8 +158,10 @@ void EnemyManager::updateState(double delta) {
           setEnemyRandomPos(enemy);
         } else {
           // 충돌체 위치 업데이트
-          Vector2 pos = enemy->getColliderCenterPosition();
-          enemy->setCollider(pos.x, pos.y + movement.y, 0.0f);
+          Vector2 colliderPos = {
+              enemy->position().x + ((float)m_texture->header()->width / 2),
+              enemy->position().y + ((float)m_texture->header()->height / 2)};
+          enemy->setCollider(colliderPos.x, colliderPos.y, 0.0f);
 
           // DEBUG: 이 위치 이동은 Math::createCirclePoints 보다 빠를 것
           for (unsigned i = 0; i < 180; ++i) {
@@ -165,6 +170,21 @@ void EnemyManager::updateState(double delta) {
         }
         break;
       }
+#else
+      case EnemyStateMove: {
+        float newYPos = enemy->position().y + enemy->speed() * delta;
+        if(newYPos >= enemy->destination().y) {
+          // 도착
+          enemy->isVisible(false);
+          enemy->state(EnemyStateIdle);
+          setEnemyRandomPos(enemy);
+        } else {
+
+        }
+
+        break;
+      }
+#endif
       case EnemyStateHit: {
         // 맞은 것에 대한 처리
         enemy->isVisible(false);

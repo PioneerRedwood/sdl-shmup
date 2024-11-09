@@ -25,13 +25,13 @@ constexpr auto s_bulletFilepath = "../../resources/bullet.tga";
 
 unsigned s_bulletMaxYPos = 0;
 float s_bulletColliderRadius = 3.0f;
-unsigned s_maximumBulletCount = 1;  // 총알 최대 갯수
+unsigned s_maximumBulletCount = 25;  // 총알 최대 갯수
 
 Vector2 s_playerSpawnPosition;
 float s_playerMoveStepSize = 100.0f;
 float s_playerSpeed = 1.25f;
 float s_playerColliderRadius = 0.0f;
-float s_playerFireDelay = 50.0f;
+float s_playerFireDelay = 150.0f;
 float s_playerMaxXPos = 0.0f;
 
 Player::Player() : GameObject() { 
@@ -291,6 +291,7 @@ void Player::updateBulletPosition(double delta) {
 
 void Player::onCollided(const GameObject& target) {
   // TODO: 맞았음을 가시적으로 보여줘야 함
+  std::cout << "Player::onCollided with enemy! \n";
 }
 
 Vector2 Player::getColliderCenterByDelta(double delta) const {

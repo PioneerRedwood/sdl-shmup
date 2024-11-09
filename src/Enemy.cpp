@@ -34,6 +34,10 @@ void Enemy::onCollided(const GameObject& target) {
   switch (target.tag()) {
     case GameObjectTagPlayer: {
       // TODO: 사라지고 플레이어에게 데미지
+      isVisible(false);
+      m_state = EnemyStateIdle;
+      position({1000.0f, 1000.0f});
+      setCollider(1000.0f, 1000.0f, s_enemyColliderRadius);
       break;
     }
     case GameObjectTagBullet: {
@@ -75,8 +79,8 @@ Vector2 Enemy::nextPos(double delta) const {
 
 Vector2 Enemy::getColliderCenterByDelta(double delta) const {
   if(m_state == EnemyStateMove) {
-    float magnitude = m_speed * delta;
-    Vector2 pos = { m_collider->position.x, m_collider->position.y + magnitude };
+     float magnitude = m_speed * delta;
+     Vector2 pos = { m_collider->position.x, m_collider->position.y + magnitude };
 
     // 목적지에 도착을 했으면 목적지 위치의 충돌체 중심 좌표를 반환
     if((m_destination - pos).magnitude() <= magnitude) {

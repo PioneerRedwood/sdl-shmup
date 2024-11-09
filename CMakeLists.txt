@@ -6,7 +6,8 @@ project(sdl-shmup)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 set(CXX_FLAGS "-Wall")
 
 # header files
@@ -29,6 +30,7 @@ add_executable(${PROJECT_NAME}
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # Windows specific settings (Visual Studio)
     message(STATUS "Configuring for Windows (Visual Studio)")
+    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/wd4819>")
 
     # Windows include path
     include_directories(

@@ -96,7 +96,8 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
           break;
         }
       }
-
+      // RGBA 480 * 640 buffer write
+      // DrawPoints 한번만
       SDL_SetRenderDrawColor(m_renderer, blended.b, blended.g, blended.r,
                              blended.a);
       SDL_RenderDrawPoint(m_renderer, rect.x + w, rect.y + h);

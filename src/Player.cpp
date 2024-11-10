@@ -28,6 +28,7 @@ float s_bulletColliderRadius = 3.0f;
 unsigned s_maximumBulletCount = 25;  // 총알 최대 갯수
 
 Vector2 s_playerSpawnPosition;
+// TODO: 정해진 시간 정해진 거리를 이동해야
 float s_playerMoveStepSize = 100.0f;
 float s_playerSpeed = 1.25f;
 float s_playerColliderRadius = 0.0f;
@@ -115,13 +116,15 @@ void Player::updatePosition(float x, float y) {
                            s_playerColliderRadius);
 }
 
+int _dir = 0;
+
 /// @brief 델타 타임을 기반으로 상태 업데이트
 /// @param delta
 void Player::updateState(double delta) {
   // 위치 이동
   if (m_isFlaggedToMove) {
     float prevXPos = m_position.x;
-
+    // TODO: 누른 만큼만 그 방향대로 움직이기 다시 구현
     // 방향 구하기
     Vector2 direction = (m_destPos - m_position).normalized();
     // 해당 프레임에서 얼마나 이동해야 하는지 구하기
@@ -174,7 +177,7 @@ void Player::updateState(double delta) {
 }
 
 /// @brief 지정한 방향대로 속도와 곱하여 목표 지점을 설정하게 된다
-/// @param direction -1.0f ~ 1.0f
+/// @param direction -1.0f, 1.0f
 void Player::move(int direction) {
   // const float maxGapFromEdge = 5.0f;
   const float maxGapFromEdge = m_planeTexture->header()->width;
@@ -190,11 +193,13 @@ void Player::move(int direction) {
     return;
   }
 
+  _dir = direction;
+
   m_isFlaggedToMove = true;
   m_destPos.x = m_position.x + s_playerMoveStepSize * direction;
 
-  std::cout << "Player::move called " << m_position.x << " > " << m_destPos.x
-            << std::endl;
+  //std::cout << "Player::move called " << m_position.x << " > " << m_destPos.x
+  //          << std::endl;
 }
 
 void Player::updateBulletPosition(double delta) {
@@ -205,6 +210,7 @@ void Player::updateBulletPosition(double delta) {
   for (unsigned i = 0; i < m_bulletCount; ++i) {
     Bullet* bullet = &m_bullets[i];
 #if 1
+    // TODO: 이미 쏜 총알만 루프를 도는 것이 맞는 것. 
     if(bullet->state() == BulletStateFired) {
       float newYPos = bullet->position().y - bullet->speed() * delta;
       
@@ -212,19 +218,6 @@ void Player::updateBulletPosition(double delta) {
         // 도착
         bullet->state(BulletStateIdle);
         bullet->isVisible(false);
-        
-        // 총구 위치로 이동
-        bullet->position({m_position.x + (m_planeTexture->header()->width / 2), m_position.y});
-
-        // 총알 충돌체 이동
-        Vector2 newColliderPos = {
-          bullet->position().x + bullet->size().x / 2,
-          bullet->position().y + bullet->size().y / 2
-        };
-        bullet->setCollider(newColliderPos.x, newColliderPos.y, s_bulletColliderRadius);
-        
-        // 디버그 포인트 이동
-        Math::createCirclePoints(bullet->debugPoints(), newColliderPos.x, newColliderPos.y, s_bulletColliderRadius);
       } else {
         // 이동
         // 총알은 현재 위치에서 속도에 맞춰 -Y 방향으로 이동(윗쪽)

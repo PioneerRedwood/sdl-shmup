@@ -109,6 +109,7 @@ void drawColliderLayers(shmup::SDLRenderer& renderer,
                         const shmup::Enemy* enemies, unsigned enemyCount,
                         const shmup::Vector2* playerColliderPoints,
                         const shmup::Bullet* bullets, unsigned bulletCount) {
+#if 0
   SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
 
   // Enemy 충돌체 레이어 그리기
@@ -139,6 +140,7 @@ void drawColliderLayers(shmup::SDLRenderer& renderer,
     }
     SDL_RenderDrawPointsF(renderer.native(), (const SDL_FPoint*)bullet->debugPoints(), 180);
   }
+#endif
 }
 
 /// @brief 충돌 검사하면서 각 적나 총알의 상태가 변경되도록 플래그 설정
@@ -150,7 +152,6 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
                   shmup::Player* player,
                   double delta) {
   using namespace shmup;
-
 #if 0
   // 쿼드 트리를 사용할 수 있을까?
   for (unsigned i = 0; i < enemyManager->enemyCount(); ++i) {
@@ -189,19 +190,21 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
      - 예상 위치 [ s * n * 1, s * n * 2 ..., s * n * (int)(d / n), s * d ]
   */
   bool hasFrameSkipped = (delta >= (s_targetFrameTime * 1.5f)); // 이 값은 변경될 수 있음
-  if(hasFrameSkipped) {
-    // Frame has been skipped
-    std::cout << "Frame skipped! delta: " << delta << ", target: " << s_targetFrameTime << std::endl;
-  } else {
-    std::cout << "Delta: " << delta << std::endl;
-  }
+  //if(hasFrameSkipped) {
+  //  // Frame has been skipped
+  //  std::cout << "Frame skipped! delta: " << delta << ", target: " << s_targetFrameTime << std::endl;
+  //} else {
+  //  std::cout << "Delta: " << delta << std::endl;
+  //}
+
+  // 60fps 16ms 40 / 10 = 4 | 1 2 3 4
   unsigned skippedFrameCount = (unsigned)(delta / s_collisionCheckInterval);
 
   for (unsigned i = 0; i < enemyManager->enemyCount(); ++i) {
     // player <-> enemies
     Enemy* enemy = &enemyManager->enemies()[i];
     if(enemy == nullptr) continue;
-
+#if 0
     if (player->isVisible() && enemy->isVisible()) {
       // 만약 프레임 스킵이 일어났다면 배열의 형태로 스킵된 프레임마다 오브젝트의 좌표를 구하고 비교
       bool isCollided = false;
@@ -227,11 +230,12 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
       }
 
       if(isCollided) {
+        std::cout << "Collision! \n";
         player->onCollided(*enemy);
         enemy->onCollided(*player);
       }
     }
-
+#endif
     // Enemies <-> bullet
     for (unsigned j = 0; j < player->bulletCount(); ++j) {
       Bullet* bullet = &player->bullets()[j];
@@ -273,6 +277,7 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
         }
 
         if (isCollided) {
+          std::cout << "Collision! \n";
           enemy->onCollided(*bullet);
           bullet->onCollided(*enemy);
         }
@@ -285,7 +290,7 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
 int main(int argc, char** argv) {
   std::srand((unsigned)time(nullptr));
 
-  auto* program = shmup::SDLProgram::instance();
+  shmup::SDLProgram* program = shmup::SDLProgram::instance();
 
   if (program->init(400, 0, 480, 640) == false) {
     return 1;
@@ -320,47 +325,63 @@ int main(int argc, char** argv) {
   // Main loop
   program->updateTime();
   while (program->neededQuit() == false) {
-    // Update delta
-    program->updateTime();
+    
+    // 30fps같이 고정 목표 프레임이 있는 경우 아래와 같은 방식으로도 구현 가능
+    // 여기서 delta 구하기
+    // 시간이 목표한 0.3 보다 작으면 누적하고 업데이트 스킵 
+    // 누적 + 현재 델타가 0.3보다 크면 0.3만큼으로 쪼개서 업데이트 
+    //  예를 들어 1초인 경우 0.3 * 3 으로 3번 업데이트하고 0.1 누적 
+    //update();
 
-    performCollisionChecks(enemyManager, player, program->delta());
-
-    // Handle input events
-    SDL_Event event;
-    while (SDL_PollEvent(&event) != 0) {
-      switch (event.type) {
+    {
+      // Update delta
+      program->updateTime();
+      
+      // Handle input events
+      SDL_Event event;
+      while (SDL_PollEvent(&event) != 0) {
+        int move = 0;
+        switch (event.type) {
         case SDL_QUIT: {
           program->quit();
           return 0;
         }
         case SDL_KEYDOWN: {
           switch (event.key.keysym.sym) {
-            case SDLK_RIGHT: {
-              // std::cout << "KeyEvent move right >> \n";
-              player->move(1);
-              break;
-            }
-            case SDLK_LEFT: {
-              // std::cout << "KeyEvent move left >> \n";
-              player->move(-1);
-              break;
-            }
-            default: {
-              break;
-            }
+          case SDLK_RIGHT: {
+            // std::cout << "KeyEvent move right >> \n";
+            //player->move(1);
+            move = 1;
+            break;
+          }
+          case SDLK_LEFT: {
+            // std::cout << "KeyEvent move left >> \n";
+            //player->move(-1);
+            move = -1;
+            break;
+          }
+          default: {
+            break;
+          }
           }
           break;
         }
         default: {
           break;
         }
-      }
-    }
+        }
 
-    // 각 상태 변화
-    starManager->updateState(program->delta());
-    player->updateState(program->delta());
-    enemyManager->updateState(program->delta());
+        player->move(move);
+      }
+
+      // 각 상태 변화
+      starManager->updateState(program->delta());
+      player->updateState(program->delta());
+      enemyManager->updateState(program->delta());
+
+      // 충돌 검사
+      performCollisionChecks(enemyManager, player, program->delta());
+    }
 
     // Rendering
     SDL_SetRenderDrawColor(nativeRenderer, 12, 10, 40, 255);
@@ -381,9 +402,9 @@ int main(int argc, char** argv) {
 
     renderer.present();
 
-    SDL_Delay(1);  // Almost no delayed
+    //SDL_Delay(1);  // Almost no delayed
 //    SDL_Delay(16);  // 16ms delayed
-//    SDL_Delay(16 + rand() / ((RAND_MAX + 1u) / 64));  // 16 ~ 80ms randome delayed
+    //SDL_Delay(16 + rand() / ((RAND_MAX + 1u) / 64));  // 16 ~ 80ms randome delayed
   }
 
   return 0;

@@ -14,7 +14,6 @@ float s_bulletSpeed = 0.3f;
 
 Bullet::Bullet() : GameObject() {
   // 기본값 설정
-  //m_size = {16.0f, 16.0f};
   m_size = {16.0f, 16.0f};
   
   setCollider(0.0f, 0.0f, 0.0f);
@@ -68,7 +67,6 @@ Vector2 Bullet::getColliderCenterByDelta(double delta) const {
 
     // 목적지에 도착을 했으면 목적지 위치의 충돌체 중심 좌표를 반환
     if ((m_destination - pos).magnitude() <= magnitude) {
-      // return (m_destination + m_size);
       // 목적지 도착 시 충돌 검사는 의미가 없음
       return {-1.0f, -1.0f};
     } else {

@@ -13,6 +13,8 @@
 #include "TGA.hpp"
 #include "Bullet.hpp"
 
+#include <list>
+
 namespace shmup {
 
 class Player : public GameObject {
@@ -33,7 +35,7 @@ class Player : public GameObject {
 
   const TGA& bulletTexture() const { return *m_bulletTexture; }
 
-  void updateBulletPosition(double delta);
+  void updateBullets(double delta);
 
   Bullet* bullets() { return m_bullets; }
 
@@ -48,17 +50,21 @@ class Player : public GameObject {
   /// @brief 만약 움직이고 있다면 주어진 시간의 예상되는 콜라이더 중심 좌표 반환.
   /// 만약 움직이도록 설정되지 않았거나 목적지에 위치해 있다면 현재 위치 반환.
   Vector2 getColliderCenterByDelta(double delta) const;
+private:
+  void fire();
 
  private:
   TGA* m_planeTexture = nullptr;
 
   TGA* m_bulletTexture = nullptr;
 
-  bool m_isFlaggedToMove = false;
+  int m_directionToMoveThisFrame = 0;
 
   Vector2 m_destPos;
 
   Bullet* m_bullets = nullptr;
+
+  std::list<Bullet*> m_fired;
 
   unsigned m_bulletCount = 0;
 

@@ -41,6 +41,21 @@ RGBA alpha(const RGBA& src, const RGBA& dst) {
   return retValue;
 }
 
+/// color pre-multiplied alpha blend
+/// 소스 RGB에 이미 소스 알파값이 적용되어 있음을 전제
+/// dstRGB = srcRGB + (dstRGB * (1-srcA))
+/// dstA = srcA + (dstA * (1-srcA))
+RGBA premultipliedAlpha(const RGBA& src, const RGBA& dst) {
+  RGBA retValue = {0};
+  RGBAf s = convertToFloat(src), d = convertToFloat(dst);
+  const float invSrcAlpha = 1.0f - s.a;
+  retValue.r = normalizeToByte(s.r + d.r * invSrcAlpha);
+  retValue.g = normalizeToByte(s.g + d.g * invSrcAlpha);
+  retValue.b = normalizeToByte(s.b + d.b * invSrcAlpha);
+  retValue.a = normalizeToByte(s.a + (d.a * invSrcAlpha));
+  return retValue;
+}
+
 /// additive blending
 /// dstRGB = (srcRGB * srcA) + dstRGB
 /// dstA = dstA

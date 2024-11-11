@@ -140,15 +140,14 @@ void EnemyManager::updateState(double delta) {
   for(unsigned i = 0; i < m_enemyCount; ++i) {
     Enemy* enemy = &m_enemies[i];
     switch (enemy->state()) {
-#if 1
       case EnemyStateMove: {
         Vector2 currentPos = enemy->position();
-        Vector2 direction = (enemy->destination() - currentPos).normalized();
+        // Vector2 direction = (enemy->destination() - currentPos).normalized();
         float magnitude = enemy->speed() * delta;
-        Vector2 movement = direction * magnitude;
+        // Vector2 movement = direction * magnitude;
 
         // 이동
-        enemy->position({ currentPos.x, currentPos.y + movement.y });
+        enemy->position({ currentPos.x, currentPos.y + magnitude });
 
         if ((enemy->destination() - enemy->position()).magnitude() < magnitude) {
           // 초기 위치로
@@ -164,26 +163,11 @@ void EnemyManager::updateState(double delta) {
 
           // DEBUG: 이 위치 이동은 Math::createCirclePoints 보다 빠를 것
           for (unsigned i = 0; i < 180; ++i) {
-            enemy->debugColliderPoints()[i].y += movement.y;
+            enemy->debugColliderPoints()[i].y += magnitude;
           }
         }
         break;
       }
-#else
-      case EnemyStateMove: {
-        float newYPos = enemy->position().y + enemy->speed() * delta;
-        if(newYPos >= enemy->destination().y) {
-          // 도착
-          enemy->isVisible(false);
-          enemy->state(EnemyStateIdle);
-          setEnemyRandomPos(enemy);
-        } else {
-
-        }
-
-        break;
-      }
-#endif
       case EnemyStateHit: {
         // 맞은 것에 대한 처리
         enemy->isVisible(false);

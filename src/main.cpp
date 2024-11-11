@@ -19,6 +19,7 @@
 #include "TGA.hpp"
 
 #define DRAW_PIXELS true
+#define DRAW_COLLIDER false
 
 void drawStars(shmup::SDLRenderer& renderer,
                const shmup::TGA& tga, const shmup::Star* stars,
@@ -109,7 +110,7 @@ void drawColliderLayers(shmup::SDLRenderer& renderer,
                         const shmup::Enemy* enemies, unsigned enemyCount,
                         const shmup::Vector2* playerColliderPoints,
                         const shmup::Bullet* bullets, unsigned bulletCount) {
-#if 0
+#if DRAW_COLLIDER
   SDL_SetRenderDrawColor(renderer.native(), 255, 255, 255, 255);
 
   // Enemy 충돌체 레이어 그리기
@@ -146,33 +147,11 @@ void drawColliderLayers(shmup::SDLRenderer& renderer,
 /// @brief 충돌 검사하면서 각 적나 총알의 상태가 변경되도록 플래그 설정
 /// 프레임 스킵이 발생했을 때 처리되도록 수행
 /// - 공간분할을 통해 빠르게 할 수 있음; 예시로 쿼드 트리가 있음
-constexpr float s_collisionCheckInterval = 10.0f; // 10 밀리초 간격
-constexpr float s_targetFrameTime = 1000.0f / 30; // 목표 프레임
+constexpr float s_targetFrameTime = 1000.0f / 30; // 목표 프레임 0.3333..
 void performCollisionChecks(shmup::EnemyManager* enemyManager,
                   shmup::Player* player,
                   double delta) {
   using namespace shmup;
-#if 0
-  // 쿼드 트리를 사용할 수 있을까?
-  for (unsigned i = 0; i < enemyManager->enemyCount(); ++i) {
-    // player <-> enemies
-    Enemy* enemy = &enemyManager->enemies()[i];
-
-    if (player->isVisible() && enemy->isVisible() && GameObject::isCollided(*player, *enemy)) {
-      player->onCollided(*enemy);
-      enemy->onCollided(*player);
-    }
-
-    // Enemies <-> bullet
-    for (unsigned i = 0; i < player->bulletCount(); ++i) {
-      Bullet* bullet = &player->bullets()[i];
-      if (bullet->isVisible() && enemy->isVisible() && GameObject::isCollided(*bullet, *enemy)) {
-        enemy->onCollided(*bullet);
-        bullet->onCollided(*enemy);
-      }
-    }
-  }
-#else
   /*
     프레임 스킵이 발생하면 오브젝트는 스킵된 만큼의 위치로 이동하여 충돌 판정으로부터 벗어날 수 있다.
     프레임 스킵에 대한 적절한 처리로 모든 오브젝트의 충돌 판정을 수행한다.
@@ -197,22 +176,21 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
   //  std::cout << "Delta: " << delta << std::endl;
   //}
 
-  // 60fps 16ms 40 / 10 = 4 | 1 2 3 4
-  unsigned skippedFrameCount = (unsigned)(delta / s_collisionCheckInterval);
+  unsigned skippedFrameCount = (unsigned)(delta / s_targetFrameTime);
 
   for (unsigned i = 0; i < enemyManager->enemyCount(); ++i) {
     // player <-> enemies
     Enemy* enemy = &enemyManager->enemies()[i];
     if(enemy == nullptr) continue;
-#if 0
+
     if (player->isVisible() && enemy->isVisible()) {
       // 만약 프레임 스킵이 일어났다면 배열의 형태로 스킵된 프레임마다 오브젝트의 좌표를 구하고 비교
       bool isCollided = false;
       if(hasFrameSkipped) {
         for(unsigned j = 1; j < skippedFrameCount; ++j) {
           // 두 콜라이더의 정점
-          Vector2 enemyPos = enemy->getColliderCenterByDelta(j * s_collisionCheckInterval);
-          Vector2 playerPos = player->getColliderCenterByDelta(j * s_collisionCheckInterval);
+          Vector2 enemyPos = enemy->getColliderCenterByDelta(j * s_targetFrameTime);
+          Vector2 playerPos = player->getColliderCenterByDelta(j * s_targetFrameTime);
 
           // 적 좌표가 -1.0f, -1.0f 한번이라도 나오면 루프 탈출
           if(enemyPos == Vector2(-1.0f, -1.0f)) {
@@ -230,12 +208,11 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
       }
 
       if(isCollided) {
-        std::cout << "Collision! \n";
+        std::cout << "Collision! enemy <-> player \n";
         player->onCollided(*enemy);
         enemy->onCollided(*player);
       }
     }
-#endif
     // Enemies <-> bullet
     for (unsigned j = 0; j < player->bulletCount(); ++j) {
       Bullet* bullet = &player->bullets()[j];
@@ -249,9 +226,9 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
           for (unsigned k = 1; k < skippedFrameCount; ++k) {
             // 두 콜라이더의 정점
             Vector2 enemyPos =
-                enemy->getColliderCenterByDelta((double)k * s_collisionCheckInterval);
+                enemy->getColliderCenterByDelta((double)k * s_targetFrameTime);
             Vector2 bulletPos =
-                bullet->getColliderCenterByDelta((double)k * s_collisionCheckInterval);
+                bullet->getColliderCenterByDelta((double)k * s_targetFrameTime);
 
             // 적 좌표가 -1.0f, -1.0f 한번이라도 나오면 루프 탈출
             if (enemyPos == Vector2(-1.0f, -1.0f) || bulletPos == Vector2(-1.0f, -1.0f)) {
@@ -261,13 +238,12 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
             float distance = Math::distance(enemyPos, bulletPos);
             if (distance <=
                 (enemy->collider()->radius + bullet->collider()->radius)) {
-              // 여기에 로그
-              printf(
-                  "Collision Y [cur: bullet %.1f enemy %.1f] [%.1f "
-                  "later: bullet %.1f enemy %.1f] \n",
-                  bullet->collider()->position.y, enemy->collider()->position.y,
-                  (double)k * s_collisionCheckInterval, bulletPos.y,
-                  enemyPos.y);
+              // printf(
+              //     "Collision Y [cur: bullet %.1f enemy %.1f] [%.1f "
+              //     "later: bullet %.1f enemy %.1f] \n",
+              //     bullet->collider()->position.y, enemy->collider()->position.y,
+              //     (double)k * s_targetFrameTime, bulletPos.y,
+              //     enemyPos.y);
               isCollided = true;
               break;
             }
@@ -277,14 +253,13 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
         }
 
         if (isCollided) {
-          std::cout << "Collision! \n";
+          // std::cout << "Collision! enemy <-> bullet \n";
           enemy->onCollided(*bullet);
           bullet->onCollided(*enemy);
         }
       }
     }
   }
-#endif
 }
 
 int main(int argc, char** argv) {

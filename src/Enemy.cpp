@@ -84,7 +84,6 @@ Vector2 Enemy::getColliderCenterByDelta(double delta) const {
 
     // 목적지에 도착을 했으면 목적지 위치의 충돌체 중심 좌표를 반환
     if((m_destination - pos).magnitude() <= magnitude) {
-      // return { m_destination.x + (m_size.x / 2), m_destination.y + (m_size.y / 2) };
       // 목적지에 도착했다면 사라져있을 것이므로 검사하는 것은 의미가 없음
       return { -1.0f, -1.0f };
     } else {

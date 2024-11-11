@@ -167,10 +167,14 @@ void Player::updateState(double delta) {
 /// @brief 지정한 방향대로 속도와 곱하여 목표 지점을 설정하게 된다
 /// @param direction -1.0f, 1.0f
 void Player::move(int direction) {
+
+#if 0
   const float gap = 10.0f;
   if (m_position.x <= gap || m_position.x >= (s_playerMaxXPos - gap)) {
+    m_directionToMoveThisFrame = 0;
     return;
   }
+#endif
 
   m_directionToMoveThisFrame = direction;
 
@@ -193,7 +197,7 @@ void Player::updateBullets(double delta) {
       // 도착
       bullet->isVisible(false);
       bullet->state(BulletStateIdle);
-      m_fired.erase(bulletIter);
+      bulletIter = m_fired.erase(bulletIter);
     } else {
       // 이동
       bullet->position({bullet->position().x, bullet->position().y - movement});
@@ -207,9 +211,8 @@ void Player::updateBullets(double delta) {
       for (unsigned i = 0; i < 180; ++i) {
         bullet->debugPoints()[i].y -= movement;
       }
+      ++bulletIter;
     }
-
-    ++bulletIter;
   }
 }
 

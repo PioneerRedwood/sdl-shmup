@@ -17,9 +17,11 @@
 #include "SDLProgram.hpp"
 #include "StarManager.hpp"
 #include "TGA.hpp"
+#include "Blend.hpp"
 
 #define DRAW_PIXELS true
 #define DRAW_COLLIDER false
+#define COPY_TO_PIXELBUFFER true
 
 void drawStars(shmup::SDLRenderer& renderer,
                const shmup::TGA& tga, const shmup::Star* stars,
@@ -84,6 +86,90 @@ void drawEnemies(shmup::SDLRenderer& renderer,
                  const shmup::TGA& tga, const shmup::Enemy* enemies,
                  unsigned enemyCount) {
 #if DRAW_PIXELS
+#if COPY_TO_PIXELBUFFER
+  using namespace shmup;
+  renderer.flush();
+  SDL_Texture* tempTex = renderer.m_tempFrameBuffer;
+  void* pixels = {};
+  int pitch = {};
+  if(SDL_LockTexture(tempTex, NULL, &pixels, &pitch) != 0) {
+    std::cout << "drawEnemies retrieving texture pixel data failed " << SDL_GetError() << std::endl;
+    return;
+  }
+
+  if(SDL_RenderReadPixels(renderer.native(), NULL, SDL_PIXELFORMAT_BGRA32, pixels, pitch) != 0) {
+    std::cout << "drawEnemies reading pixel data failed " << SDL_GetError() << std::endl;
+    return;
+  }
+  renderer.m_currentBlendMode = SDL_BLENDMODE_BLEND;
+  SDL_FRect rect;
+  RGBA* tgaPixels = const_cast<RGBA*>(tga.pixelData());
+  RGBA* pixelData = (RGBA*)pixels;
+  for (unsigned i = 0; i < enemyCount; ++i) {
+    const shmup::Enemy& enemy = enemies[i];
+    if (enemy.isVisible()) {
+      rect.w = enemy.size().x, rect.h = enemy.size().y;
+      rect.x = enemy.position().x, rect.y = enemy.position().y;
+
+      /*
+        (-----width-----)
+        +---------------+^
+        |               | h
+        |   x,y ---+    | i
+        |   |      |    | g
+        |   +------+ w  | h
+        |   h           | t
+        +---------------+ 
+      */
+      const int stride = pitch / sizeof(RGBA);
+      const int maxDstOffset = stride * SDLProgram::instance()->height() - 1;
+      int dstStart = ((int)rect.y * stride + (int)rect.x);
+      int srcOffset, dstOffset = dstStart;
+      for (int h = 0; h < rect.h; ++h)
+      {
+        for (int w = 0; w < rect.w; ++w)
+        {
+          srcOffset = h * rect.h + w;
+          dstOffset = dstStart + (h * stride + w);
+
+          if(dstOffset > maxDstOffset) {
+            break;
+          }
+          
+          RGBA& dest = pixelData[dstOffset];
+          switch (renderer.m_currentBlendMode)
+          {
+          case SDL_BLENDMODE_BLEND:
+          {
+//            dest = Blend::alpha(tgaPixels[srcOffset], dest);
+            dest = Blend::premultipliedAlpha(tgaPixels[srcOffset], dest);
+            break;
+          }
+          case SDL_BLENDMODE_ADD:
+          {
+            dest = Blend::additive(tgaPixels[srcOffset], dest);
+            break;
+          }
+          case SDL_BLENDMODE_MUL:
+          {
+            dest = Blend::multiply(tgaPixels[srcOffset], dest);
+            break;
+          }
+          default:
+          {
+            dest = tgaPixels[srcOffset];
+            break;
+          }
+          }
+        }
+      }
+    }
+  }
+  SDL_UnlockTexture(tempTex);
+
+  // 전체 텍스처 그리기
+  SDL_RenderCopy(renderer.native(), tempTex, NULL, NULL);
+#else
   renderer.enableBlending(SDL_BLENDMODE_BLEND);
   for (unsigned i = 0; i < enemyCount; ++i) {
     const shmup::Enemy* enemy = &enemies[i];
@@ -91,6 +177,7 @@ void drawEnemies(shmup::SDLRenderer& renderer,
       renderer.drawTGA(tga, enemy->position().x, enemy->position().y);
     }
   }
+#endif
 #else
   SDL_Texture* texture = const_cast<SDL_Texture*>(tga.sdlTexture());
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);

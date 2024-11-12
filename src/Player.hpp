@@ -13,7 +13,7 @@
 #include "TGA.hpp"
 #include "Bullet.hpp"
 
-#include <list>
+#include <vector>
 
 namespace shmup {
 
@@ -64,7 +64,7 @@ private:
 
   Bullet* m_bullets = nullptr;
 
-  std::list<Bullet*> m_fired;
+  std::vector<Bullet*> m_fired;
 
   unsigned m_bulletCount = 0;
 

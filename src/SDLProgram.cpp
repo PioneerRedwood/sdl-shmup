@@ -39,7 +39,7 @@ bool SDLProgram::init(int x, int y, int width, int height) {
   }
 
   m_renderer = new SDLRenderer();
-  if(m_renderer->init(m_window) == false) {
+  if(m_renderer->init(m_window, m_width, m_height) == false) {
     return false;
   }
 

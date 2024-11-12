@@ -10,7 +10,7 @@
 namespace shmup {
 
 // 총알 관련 속성
-float s_bulletSpeed = 0.3f;
+float s_bulletSpeed = 0.7f;
 
 Bullet::Bullet() : GameObject() {
   // 기본값 설정

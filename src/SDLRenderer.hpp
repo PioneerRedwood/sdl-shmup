@@ -28,13 +28,17 @@ class SDLRenderer {
   SDLRenderer(SDLRenderer&&) = delete;
   SDLRenderer& operator=(SDLRenderer&&) = delete;
 
-  bool init(SDL_Window* window);
+  bool init(SDL_Window* window, int x, int y);
 
   SDL_Renderer* native();
 
   void clear();
 
   void drawTGA(const TGA& tga, int x, int y);
+  
+  void copyTGAToPixelBuffer(const TGA& tga, int x, int y);
+
+  bool readPixels(RGBA& pixels, int x, int y, int w, int h);
 
   void enableBlending(SDL_BlendMode blendMode);
 
@@ -44,12 +48,15 @@ class SDLRenderer {
 
   void flush();
 
- private:
-  SDL_Renderer* m_renderer = nullptr;
+  SDL_Texture* m_tempFrameBuffer = nullptr;
 
   SDL_BlendMode m_currentBlendMode = SDL_BLENDMODE_NONE;
 
+ private:
+  SDL_Renderer* m_renderer = nullptr;
+
   RGBA* m_pixelBuffer = nullptr;
+
 };
 
 }  // namespace shmup

@@ -20,7 +20,9 @@ constexpr auto s_starFilepath = "../../resources/star.tga";
 float s_starMaxXPos = 0.0f;
 float s_starMaxYPos = 0.0f;
 
-StarManager::StarManager() { m_starSpawnDelay = 100.0f; }
+StarManager::StarManager() {
+    m_starSpawnDelay = 10.0f;
+}
 
 StarManager::~StarManager() {
   if (m_tga) {

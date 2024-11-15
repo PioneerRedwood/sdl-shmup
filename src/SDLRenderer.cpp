@@ -75,12 +75,19 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
   }
 
   const int pitch = tga.header()->width * sizeof(RGBA);
+  // Unknown = Pixel format of the current render target
+  SDL_RendererInfo info = {};
+  SDL_GetRendererInfo(m_renderer, &info);
+  // The format was SDL_PIXELFORMAT_BGRA32 on Windows
+  // TODO: 알파값이 SDL_GetRenderDrawColor 값과 다르다
   if (SDL_RenderReadPixels(m_renderer, &rect, SDL_PIXELFORMAT_BGRA32, m_pixelBuffer,
                            pitch) != 0) {
     std::cout << "readPixels failed " << SDL_GetError() << std::endl;
     return;
   }
   RGBA* tgaPixels = const_cast<RGBA*>(tga.pixelData());
+
+#if 0
   for (int h = 0; h < tga.header()->height; ++h) {
     for (int w = 0; w < tga.header()->width; ++w) {
       int offset = h * tga.header()->width + w;
@@ -108,6 +115,30 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
       SDL_RenderDrawPoint(m_renderer, rect.x + w, rect.y + h);
     }
   }
+#else
+  // Premultiplied blending
+  int newX = rect.x + rect.w;
+  for (int h = 0; h < tga.header()->height; ++h) {
+    for (int w = 0; w < tga.header()->width; ++w) {
+      int offset = h * tga.header()->width + w;
+
+      // TODO: 그려지지 않음 확인 요망
+      RGBA b1 = Blend::alpha(tgaPixels[offset], m_pixelBuffer[offset]);
+      SDL_SetRenderDrawColor(m_renderer, b1.b, b1.g, b1.r,
+        b1.a);
+      SDL_RenderDrawPoint(m_renderer, rect.x + w, rect.y + h);
+
+      RGBA b2= Blend::premultipliedAlpha(tgaPixels[offset], m_pixelBuffer[offset]);
+      SDL_SetRenderDrawColor(m_renderer, b2.b, b2.g, b2.r,
+                             b2.a);
+      SDL_RenderDrawPoint(m_renderer, newX + w, rect.y + h);
+
+      //printf("TEST alpha x: %d pre alpha: %d \n", rect.x + w, newX + w);
+      //printf("TEST alpha %d %d %d %d pre alpha: %d %d %d %d \n", 
+      //  b1.r, b1.g, b1.b, b1.a, b2.r, b2.g, b2.b, b2.a);
+    }
+  }
+#endif
 }
 
 void SDLRenderer::copyTGAToPixelBuffer(const TGA& tga, int x, int y) {

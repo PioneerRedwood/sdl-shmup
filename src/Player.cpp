@@ -16,7 +16,8 @@
 namespace shmup {
 
 #if _WIN32
-constexpr auto s_planeFilepath = "../resources/plane.tga";
+//constexpr auto s_planeFilepath = "../resources/plane.tga";
+constexpr auto s_planeFilepath = "../resources/rect.tga"; // test resource
 constexpr auto s_bulletFilepath = "../resources/bullet.tga";
 #else
 constexpr auto s_planeFilepath = "../../resources/plane.tga";

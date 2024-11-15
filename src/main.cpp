@@ -445,6 +445,17 @@ int main(int argc, char** argv) {
       performCollisionChecks(enemyManager, player, program->delta());
     }
 
+#if 1
+    // 비교 Alpha vs. Premultiplied Alpha 
+    SDL_SetRenderDrawColor(nativeRenderer, 255, 0, 0, 1);
+    Uint8 r = 0, g = 0, b = 0, a = 0;
+    SDL_GetRenderDrawColor(nativeRenderer, &r, &g, &b, &a);
+    //SDL_SetRenderDrawBlendMode(nativeRenderer, SDL_BLENDMODE_NONE);
+    SDL_SetRenderDrawBlendMode(nativeRenderer, SDL_BLENDMODE_BLEND);
+    renderer.clear();
+    renderer.flush();
+    drawPlayer(renderer, *player);
+#else
     // Rendering
     SDL_SetRenderDrawColor(nativeRenderer, 12, 10, 40, 255);
     renderer.clear();
@@ -461,6 +472,7 @@ int main(int argc, char** argv) {
                        enemyManager->enemyCount(),
                        player->debugColliderPoints(), player->bullets(),
                        player->bulletCount());
+#endif
 
     renderer.present();
 

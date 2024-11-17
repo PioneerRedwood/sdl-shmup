@@ -32,3 +32,12 @@
 - 마우스 픽킹
 
 ## 고정 프레임의 경우 꼼수가 있음
+
+# Feedback #2
+## 시스템 메모리에 그릴 거 다 그리고 한번에 점찍기로 바꿔서 비교하기
+
+## Forward Rendering vs. Deferred Rendering 차이?
+
+## [Ascii-Renderer](https://github.com/codesafe/Ascii-Renderer)
+
+

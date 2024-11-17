@@ -83,6 +83,7 @@ void SDLProgram::updateTime() {
   m_currentTime = SDL_GetPerformanceCounter();
   m_delta = (double)((m_currentTime - m_lastTime) * 1000 /
                      (double)SDL_GetPerformanceFrequency());
+  std::cout << "FPS: " << 1000 / m_delta << std::endl;
 }
 
 double SDLProgram::delta() const {

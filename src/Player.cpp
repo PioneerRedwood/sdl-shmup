@@ -16,8 +16,8 @@
 namespace shmup {
 
 #if _WIN32
-//constexpr auto s_planeFilepath = "../resources/plane.tga";
-constexpr auto s_planeFilepath = "../resources/rect.tga"; // test resource
+constexpr auto s_planeFilepath = "../resources/plane.tga";
+//constexpr auto s_planeFilepath = "../resources/rect.tga"; // test resource
 constexpr auto s_bulletFilepath = "../resources/bullet.tga";
 #else
 constexpr auto s_planeFilepath = "../../resources/plane.tga";
@@ -219,7 +219,7 @@ void Player::updateBullets(double delta) {
 
 void Player::onCollided(const GameObject& target) {
   // TODO: 맞았음을 가시적으로 보여줘야 함
-  std::cout << "Player::onCollided with enemy! \n";
+  // std::cout << "Player::onCollided with enemy! \n";
 }
 
 Vector2 Player::getColliderCenterByDelta(double delta) const {

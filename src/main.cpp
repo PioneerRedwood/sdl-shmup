@@ -141,8 +141,8 @@ void drawEnemies(shmup::SDLRenderer& renderer,
           {
           case SDL_BLENDMODE_BLEND:
           {
-//            dest = Blend::alpha(tgaPixels[srcOffset], dest);
-            dest = Blend::premultipliedAlpha(tgaPixels[srcOffset], dest);
+            dest = Blend::alpha(tgaPixels[srcOffset], dest);
+            //dest = Blend::premultipliedAlpha(tgaPixels[srcOffset], dest);
             break;
           }
           case SDL_BLENDMODE_ADD:
@@ -295,7 +295,7 @@ void performCollisionChecks(shmup::EnemyManager* enemyManager,
       }
 
       if(isCollided) {
-        std::cout << "Collision! enemy <-> player \n";
+        //std::cout << "Collision! enemy <-> player \n";
         player->onCollided(*enemy);
         enemy->onCollided(*player);
       }
@@ -445,7 +445,7 @@ int main(int argc, char** argv) {
       performCollisionChecks(enemyManager, player, program->delta());
     }
 
-#if 1
+#if 0 
     // 비교 Alpha vs. Premultiplied Alpha 
     SDL_SetRenderDrawColor(nativeRenderer, 255, 0, 0, 1);
     Uint8 r = 0, g = 0, b = 0, a = 0;
@@ -478,7 +478,7 @@ int main(int argc, char** argv) {
 
     //SDL_Delay(1);  // Almost no delayed
 //    SDL_Delay(16);  // 16ms delayed
-    //SDL_Delay(16 + rand() / ((RAND_MAX + 1u) / 64));  // 16 ~ 80ms randome delayed
+    //SDL_Delay(16 + rand() / ((RAND_MAX + 1u) / 64));  // 16 ~ 80ms random delayed
   }
 
   return 0;

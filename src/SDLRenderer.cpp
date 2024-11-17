@@ -87,7 +87,7 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
   }
   RGBA* tgaPixels = const_cast<RGBA*>(tga.pixelData());
 
-#if 0
+#if 1
   for (int h = 0; h < tga.header()->height; ++h) {
     for (int w = 0; w < tga.header()->width; ++w) {
       int offset = h * tga.header()->width + w;

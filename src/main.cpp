@@ -19,8 +19,8 @@
 #include "TGA.hpp"
 #include "Blend.hpp"
 
-#define DRAW_PIXELS_ONCE false
-#define DRAW_EACH_PIXELS true
+#define DRAW_PIXELS_ONCE true
+#define DRAW_EACH_PIXELS false
 #define DRAW_COLLIDER false // for debugging
 
 void drawStars(shmup::SDLRenderer& renderer,
@@ -372,12 +372,12 @@ int main(int argc, char** argv) {
     int pitch = {};
     if(SDL_LockTexture(tempTex, NULL, &pixels, &pitch) != 0) {
       std::cout << "drawEnemies retrieving texture pixel data failed " << SDL_GetError() << std::endl;
-      return;
+      return 1;
     }
 
     if(SDL_RenderReadPixels(nativeRenderer, NULL, SDL_PIXELFORMAT_BGRA32, pixels, pitch) != 0) {
       std::cout << "drawEnemies reading pixel data failed " << SDL_GetError() << std::endl;
-      return;
+      return 1;
     }
 
     renderer.m_tempFrameBuffer = (shmup::RGBA*)pixels;

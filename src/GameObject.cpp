@@ -111,9 +111,6 @@ bool GameObject::isCollided(const GameObject& a, const GameObject& b) {
 }
 
 Vector2 GameObject::getColliderCenterPosition() const {
-  // DEBUG assert
-  SDL_assert(m_collider != nullptr);
-
   if(m_collider == nullptr) {
     return {0.0f, 0.0f};
   }

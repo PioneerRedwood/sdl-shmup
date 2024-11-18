@@ -16,8 +16,12 @@
 namespace shmup {
 
 #if _WIN32
+
+#if TEST_PREMULTIPLIED_ALPHA
+constexpr auto s_planeFilepath = "../resources/rect.tga";
+#else
 constexpr auto s_planeFilepath = "../resources/plane.tga";
-//constexpr auto s_planeFilepath = "../resources/rect.tga"; // test resource
+#endif
 constexpr auto s_bulletFilepath = "../resources/bullet.tga";
 #else
 constexpr auto s_planeFilepath = "../../resources/plane.tga";
@@ -61,12 +65,10 @@ bool Player::loadResource(SDL_Renderer* renderer) {
   // load plane texture
   m_planeTexture = new TGA();
   if (m_planeTexture->readFromFile(s_planeFilepath) == false) {
-    SDL_assert(false);
     return false;
   }
 
   if (m_planeTexture->createTexture(renderer) == false) {
-    SDL_assert(false);
     return false;
   }
   s_playerColliderRadius = (float)m_planeTexture->header()->width / 4;
@@ -77,15 +79,15 @@ bool Player::loadResource(SDL_Renderer* renderer) {
   Math::createCirclePoints(m_debugColliderPoints, 0.0f, 0.0f,
                            m_planeTexture->header()->width / 2);
 
+  m_size = { (float)m_planeTexture->header()->width, (float)m_planeTexture->header()->height };
+
   // load bullet texture
   m_bulletTexture = new TGA();
   if (m_bulletTexture->readFromFile(s_bulletFilepath) == false) {
-    SDL_assert(false);
     return false;
   }
 
   if (m_bulletTexture->createTexture(renderer) == false) {
-    SDL_assert(false);
     return false;
   }
 

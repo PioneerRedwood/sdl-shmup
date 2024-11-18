@@ -35,10 +35,10 @@ class SDLRenderer {
   void clear();
 
   void drawTGA(const TGA& tga, int x, int y);
-  
-  void copyTGAToPixelBuffer(const TGA& tga, int x, int y);
 
-  bool readPixels(RGBA& pixels, int x, int y, int w, int h);
+  void clearColor(RGBA color);
+
+  void renderPixels(const RGBA* src, const SDL_FRect& rect);
 
   void enableBlending(SDL_BlendMode blendMode);
 
@@ -48,7 +48,9 @@ class SDLRenderer {
 
   void flush();
 
-  SDL_Texture* m_tempFrameBuffer = nullptr;
+  RGBA* m_tempFrameBuffer = nullptr;
+  
+  SDL_Texture* m_frameTexture = nullptr;
 
   SDL_BlendMode m_currentBlendMode = SDL_BLENDMODE_NONE;
 

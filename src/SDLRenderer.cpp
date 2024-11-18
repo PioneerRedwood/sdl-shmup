@@ -15,6 +15,13 @@
 
 namespace shmup {
 
+namespace {
+  int width = 0, height = 0;
+
+  int stride = 0;
+  int maxOffset = 0;
+}
+
 SDLRenderer::SDLRenderer() {}
 
 SDLRenderer::~SDLRenderer() { SDL_DestroyRenderer(m_renderer); }
@@ -35,9 +42,19 @@ bool SDLRenderer::init(SDL_Window* window, int w, int h) {
     return false;
   }
 
-  m_tempFrameBuffer = SDL_CreateTexture(m_renderer, 
-                                        SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, w, h);
-  if(m_tempFrameBuffer == nullptr) {
+  width = w, height = h;
+  stride = width;
+  maxOffset = stride * height - 1;
+
+  // m_tempFrameBuffer = new RGBA[w * h];
+  // if(m_tempFrameBuffer == nullptr) {
+  //   return false;
+  // }
+
+//  m_frameTexture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888, 
+  m_frameTexture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_BGRA32, 
+                                     SDL_TEXTUREACCESS_STREAMING, w, h);
+  if(m_frameTexture == nullptr) {
     return false;
   }
   return true;
@@ -67,10 +84,8 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
     return;
   }
 
-  // 만약 미리 정해놓은 텍스처 최대 크기 보다 텍스처가 크면?
   if(tga.header()->width > 128 && tga.header()->height > 128) {
     std::cout << "TGA texture size is too big to read pixels into the buffer \n";
-    // 그냥 텍스처로 그리기?
     return;
   }
 
@@ -79,7 +94,6 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
   SDL_RendererInfo info = {};
   SDL_GetRendererInfo(m_renderer, &info);
   // The format was SDL_PIXELFORMAT_BGRA32 on Windows
-  // TODO: 알파값이 SDL_GetRenderDrawColor 값과 다르다
   if (SDL_RenderReadPixels(m_renderer, &rect, SDL_PIXELFORMAT_BGRA32, m_pixelBuffer,
                            pitch) != 0) {
     std::cout << "readPixels failed " << SDL_GetError() << std::endl;
@@ -87,7 +101,29 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
   }
   RGBA* tgaPixels = const_cast<RGBA*>(tga.pixelData());
 
-#if 1
+#if TEST_PREMULTIPLIED_ALPHA
+  // Premultiplied blending
+  int newX = rect.x + rect.w;
+  for (int h = 0; h < tga.header()->height; ++h) {
+    for (int w = 0; w < tga.header()->width; ++w) {
+      int offset = h * tga.header()->width + w;
+
+      RGBA b1 = Blend::alpha(tgaPixels[offset], m_pixelBuffer[offset]);
+      SDL_SetRenderDrawColor(m_renderer, b1.b, b1.g, b1.r,
+        b1.a);
+      SDL_RenderDrawPoint(m_renderer, rect.x + w, rect.y + h);
+
+      RGBA b2= Blend::premultipliedAlpha(tgaPixels[offset], m_pixelBuffer[offset]);
+      SDL_SetRenderDrawColor(m_renderer, b2.b, b2.g, b2.r,
+                             b2.a);
+      SDL_RenderDrawPoint(m_renderer, newX + w, rect.y + h);
+
+      //printf("TEST alpha x: %d pre alpha: %d \n", rect.x + w, newX + w);
+      //printf("TEST alpha %d %d %d %d pre alpha: %d %d %d %d \n", 
+      //  b1.r, b1.g, b1.b, b1.a, b2.r, b2.g, b2.b, b2.a);
+    }
+  }
+#else
   for (int h = 0; h < tga.header()->height; ++h) {
     for (int w = 0; w < tga.header()->width; ++w) {
       int offset = h * tga.header()->width + w;
@@ -115,52 +151,45 @@ void SDLRenderer::drawTGA(const TGA& tga, int x, int y) {
       SDL_RenderDrawPoint(m_renderer, rect.x + w, rect.y + h);
     }
   }
-#else
-  // Premultiplied blending
-  int newX = rect.x + rect.w;
-  for (int h = 0; h < tga.header()->height; ++h) {
-    for (int w = 0; w < tga.header()->width; ++w) {
-      int offset = h * tga.header()->width + w;
-
-      // TODO: 그려지지 않음 확인 요망
-      RGBA b1 = Blend::alpha(tgaPixels[offset], m_pixelBuffer[offset]);
-      SDL_SetRenderDrawColor(m_renderer, b1.b, b1.g, b1.r,
-        b1.a);
-      SDL_RenderDrawPoint(m_renderer, rect.x + w, rect.y + h);
-
-      RGBA b2= Blend::premultipliedAlpha(tgaPixels[offset], m_pixelBuffer[offset]);
-      SDL_SetRenderDrawColor(m_renderer, b2.b, b2.g, b2.r,
-                             b2.a);
-      SDL_RenderDrawPoint(m_renderer, newX + w, rect.y + h);
-
-      //printf("TEST alpha x: %d pre alpha: %d \n", rect.x + w, newX + w);
-      //printf("TEST alpha %d %d %d %d pre alpha: %d %d %d %d \n", 
-      //  b1.r, b1.g, b1.b, b1.a, b2.r, b2.g, b2.b, b2.a);
-    }
-  }
 #endif
 }
 
-void SDLRenderer::copyTGAToPixelBuffer(const TGA& tga, int x, int y) {
-
+void SDLRenderer::clearColor(RGBA color) {
+  for(int y = 0; y < height; ++y) {
+    for(int x = 0; x < width; ++x) {
+      int offset = y * width + x;
+      m_tempFrameBuffer[offset] = { color.b, color.g, color.r, color.a };
+    }
+  }
 }
 
-bool SDLRenderer::readPixels(RGBA& pixels, int x, int y, int w, int h) {
-  if(w == 0 || h == 0) {
-    return false;
-  }
+/*
+  (-----width-----)
+  +---------------+^
+  |               | h
+  |   x,y ---+    | i
+  |   |      |    | g
+  |   +------+ w  | h
+  |   h           | t
+  +---------------+
+*/
+void SDLRenderer::renderPixels(const RGBA* src, const SDL_FRect& rect) {
+  if(m_tempFrameBuffer == nullptr) return;
 
-  if(w == 0 && h == 0) {
-    const int pitch = SDLProgram::instance()->width() * sizeof(RGBA);
-    SDL_RenderReadPixels(m_renderer, NULL, SDL_PIXELFORMAT_BGRA32, m_tempFrameBuffer, pitch);
-  } else {
-    SDL_Rect rect;
-    rect.x = x, rect.y = y, rect.w = w, rect.h = h;
-    const int pitch = w * sizeof(RGBA);
-    SDL_RenderReadPixels(m_renderer, &rect, SDL_PIXELFORMAT_BGRA32, m_tempFrameBuffer, pitch);
-  }
+  const int dstStart = (int)rect.y * stride + (int)rect.x;
+  int srcOffset = 0, dstOffset = 0;
 
-  return true;
+  for (int y = 0; y < rect.h; ++y) {
+    for (int x = 0; x < rect.w; ++x) {
+      srcOffset = y * rect.w + x;
+      dstOffset = dstStart + (y * stride + x);
+
+      if(dstOffset < 0 || dstOffset > maxOffset) { break; }
+
+      RGBA& dest = m_tempFrameBuffer[dstOffset];
+      dest = Blend::alpha(src[srcOffset], dest);
+    }
+  }
 }
 
 void SDLRenderer::present() { SDL_RenderPresent(m_renderer); }

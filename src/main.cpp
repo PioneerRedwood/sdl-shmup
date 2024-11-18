@@ -19,22 +19,22 @@
 #include "TGA.hpp"
 #include "Blend.hpp"
 
-#define DRAW_PIXELS true
-#define DRAW_COLLIDER false
-#define COPY_TO_PIXELBUFFER true
+#define DRAW_PIXELS_ONCE false
+#define DRAW_EACH_PIXELS true
+#define DRAW_COLLIDER false // for debugging
 
 void drawStars(shmup::SDLRenderer& renderer,
                const shmup::TGA& tga, const shmup::Star* stars,
                unsigned starCount) {
-// #if DRAW_PIXELS
-//   renderer.enableBlending(SDL_BLENDMODE_BLEND); // TODO: only pixel
-//   for (unsigned i = 0; i < starCount; ++i) {
-//     const shmup::Star* star = &stars[i];
-//     if (star->isVisible()) {
-//       renderer.drawTGA(tga, star->position().x, star->position().y);
-//     }
-//   }
-// #else
+#if DRAW_EACH_PIXELS
+   renderer.enableBlending(SDL_BLENDMODE_BLEND);
+   for (unsigned i = 0; i < starCount; ++i) {
+     const shmup::Star* star = &stars[i];
+     if (star->isVisible()) {
+       renderer.drawTGA(tga, star->position().x, star->position().y);
+     }
+   }
+#else
   SDL_Texture* tex = const_cast<SDL_Texture*>(tga.sdlTexture());
   SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
   SDL_FRect rect;
@@ -46,7 +46,7 @@ void drawStars(shmup::SDLRenderer& renderer,
       SDL_RenderCopyF(renderer.native(), tex, nullptr, &rect);
     }
   }
-// #endif
+#endif
 }
 
 void drawPlayer(shmup::SDLRenderer& renderer,
@@ -59,7 +59,7 @@ void drawPlayer(shmup::SDLRenderer& renderer,
 void drawBullets(shmup::SDLRenderer& renderer,
                  const shmup::TGA& tga, const shmup::Bullet* bullets,
                  unsigned bulletCount) {
-#if DRAW_PIXELS
+#if DRAW_EACH_PIXELS
   renderer.enableBlending(SDL_BLENDMODE_BLEND);
   for (unsigned i = 0; i < bulletCount; ++i) {
     const shmup::Bullet* bullet = &bullets[i];
@@ -85,91 +85,7 @@ void drawBullets(shmup::SDLRenderer& renderer,
 void drawEnemies(shmup::SDLRenderer& renderer,
                  const shmup::TGA& tga, const shmup::Enemy* enemies,
                  unsigned enemyCount) {
-#if DRAW_PIXELS
-#if COPY_TO_PIXELBUFFER
-  using namespace shmup;
-  renderer.flush();
-  SDL_Texture* tempTex = renderer.m_tempFrameBuffer;
-  void* pixels = {};
-  int pitch = {};
-  if(SDL_LockTexture(tempTex, NULL, &pixels, &pitch) != 0) {
-    std::cout << "drawEnemies retrieving texture pixel data failed " << SDL_GetError() << std::endl;
-    return;
-  }
-
-  if(SDL_RenderReadPixels(renderer.native(), NULL, SDL_PIXELFORMAT_BGRA32, pixels, pitch) != 0) {
-    std::cout << "drawEnemies reading pixel data failed " << SDL_GetError() << std::endl;
-    return;
-  }
-  renderer.m_currentBlendMode = SDL_BLENDMODE_BLEND;
-  SDL_FRect rect;
-  RGBA* tgaPixels = const_cast<RGBA*>(tga.pixelData());
-  RGBA* pixelData = (RGBA*)pixels;
-  for (unsigned i = 0; i < enemyCount; ++i) {
-    const shmup::Enemy& enemy = enemies[i];
-    if (enemy.isVisible()) {
-      rect.w = enemy.size().x, rect.h = enemy.size().y;
-      rect.x = enemy.position().x, rect.y = enemy.position().y;
-
-      /*
-        (-----width-----)
-        +---------------+^
-        |               | h
-        |   x,y ---+    | i
-        |   |      |    | g
-        |   +------+ w  | h
-        |   h           | t
-        +---------------+ 
-      */
-      const int stride = pitch / sizeof(RGBA);
-      const int maxDstOffset = stride * SDLProgram::instance()->height() - 1;
-      int dstStart = ((int)rect.y * stride + (int)rect.x);
-      int srcOffset, dstOffset = dstStart;
-      for (int h = 0; h < rect.h; ++h)
-      {
-        for (int w = 0; w < rect.w; ++w)
-        {
-          srcOffset = h * rect.h + w;
-          dstOffset = dstStart + (h * stride + w);
-
-          if(dstOffset > maxDstOffset) {
-            break;
-          }
-          
-          RGBA& dest = pixelData[dstOffset];
-          switch (renderer.m_currentBlendMode)
-          {
-          case SDL_BLENDMODE_BLEND:
-          {
-            dest = Blend::alpha(tgaPixels[srcOffset], dest);
-            //dest = Blend::premultipliedAlpha(tgaPixels[srcOffset], dest);
-            break;
-          }
-          case SDL_BLENDMODE_ADD:
-          {
-            dest = Blend::additive(tgaPixels[srcOffset], dest);
-            break;
-          }
-          case SDL_BLENDMODE_MUL:
-          {
-            dest = Blend::multiply(tgaPixels[srcOffset], dest);
-            break;
-          }
-          default:
-          {
-            dest = tgaPixels[srcOffset];
-            break;
-          }
-          }
-        }
-      }
-    }
-  }
-  SDL_UnlockTexture(tempTex);
-
-  // 전체 텍스처 그리기
-  SDL_RenderCopy(renderer.native(), tempTex, NULL, NULL);
-#else
+#if DRAW_EACH_PIXELS
   renderer.enableBlending(SDL_BLENDMODE_BLEND);
   for (unsigned i = 0; i < enemyCount; ++i) {
     const shmup::Enemy* enemy = &enemies[i];
@@ -177,7 +93,6 @@ void drawEnemies(shmup::SDLRenderer& renderer,
       renderer.drawTGA(tga, enemy->position().x, enemy->position().y);
     }
   }
-#endif
 #else
   SDL_Texture* texture = const_cast<SDL_Texture*>(tga.sdlTexture());
   SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
@@ -371,7 +286,7 @@ int main(int argc, char** argv) {
   if (player->loadResource(nativeRenderer) == false) {
     return 1;
   }
-  // TODO: 플레이어 시작 지점 설정
+
   const SDL_Point startPoint = {
       (int)(program->width() / 2 -
             (player->planeTexture().header()->width / 2)),
@@ -411,14 +326,10 @@ int main(int argc, char** argv) {
         case SDL_KEYDOWN: {
           switch (event.key.keysym.sym) {
           case SDLK_RIGHT: {
-            // std::cout << "KeyEvent move right >> \n";
-            //player->move(1);
             move = 1;
             break;
           }
           case SDLK_LEFT: {
-            // std::cout << "KeyEvent move left >> \n";
-            //player->move(-1);
             move = -1;
             break;
           }
@@ -445,7 +356,7 @@ int main(int argc, char** argv) {
       performCollisionChecks(enemyManager, player, program->delta());
     }
 
-#if 0 
+#if TEST_PREMULTIPLIED_ALPHA
     // 비교 Alpha vs. Premultiplied Alpha 
     SDL_SetRenderDrawColor(nativeRenderer, 255, 0, 0, 1);
     Uint8 r = 0, g = 0, b = 0, a = 0;
@@ -455,6 +366,73 @@ int main(int argc, char** argv) {
     renderer.clear();
     renderer.flush();
     drawPlayer(renderer, *player);
+#elif DRAW_PIXELS_ONCE
+    SDL_Texture* tempTex = renderer.m_frameTexture;
+    void* pixels = {};
+    int pitch = {};
+    if(SDL_LockTexture(tempTex, NULL, &pixels, &pitch) != 0) {
+      std::cout << "drawEnemies retrieving texture pixel data failed " << SDL_GetError() << std::endl;
+      return;
+    }
+
+    if(SDL_RenderReadPixels(nativeRenderer, NULL, SDL_PIXELFORMAT_BGRA32, pixels, pitch) != 0) {
+      std::cout << "drawEnemies reading pixel data failed " << SDL_GetError() << std::endl;
+      return;
+    }
+
+    renderer.m_tempFrameBuffer = (shmup::RGBA*)pixels;
+
+    // 배경 그리기
+    const shmup::RGBA spaceColor = { 12, 10, 40, 255 };
+    renderer.clearColor(spaceColor);
+    
+    SDL_FRect rect;
+    // 스타 그리기
+    for (int i = 0; i < starManager->starCount(); ++i)
+    {
+      const shmup::Star *s = &starManager->stars()[i];
+      if(s->isVisible() == false) {
+        continue;
+      }
+      const shmup::RGBA *tgaPixels = starManager->tga().pixelData();
+      rect.w = s->size().x, rect.h = s->size().y;
+      rect.x = s->position().x, rect.y = s->position().y;
+
+      renderer.renderPixels(tgaPixels, rect);
+    }
+    // 플레이어 그리기
+    const shmup::RGBA* playerPixels = player->planeTexture().pixelData();
+    rect.w = player->size().x, rect.h = player->size().y;
+    rect.x = player->position().x, rect.y = player->position().y;
+    renderer.renderPixels(playerPixels, rect);
+
+    // 총알 그리기
+    for(int i = 0; i < player->bulletCount(); ++i) {
+      const shmup::Bullet* b = &player->bullets()[i];
+      if(b->isVisible() == false) {
+        continue;
+      }
+      const shmup::RGBA* tgaPixels = player->bulletTexture().pixelData();
+      rect.w = b->size().x, rect.h = b->size().y;
+      rect.x = b->position().x, rect.y = b->position().y;
+
+      renderer.renderPixels(tgaPixels, rect);
+    }
+
+    // 적 그리기
+    for(int i = 0; i < enemyManager->enemyCount(); ++i) {
+      const shmup::Enemy* e = &enemyManager->enemies()[i];
+      if(e->isVisible() == false) {
+        continue;
+      }
+      const shmup::RGBA* tgaPixels = enemyManager->enemyTexture().pixelData();
+      rect.w = e->size().x, rect.h = e->size().y;
+      rect.x = e->position().x, rect.y = e->position().y;
+
+      renderer.renderPixels(tgaPixels, rect);
+    }
+    SDL_UnlockTexture(renderer.m_frameTexture);
+    SDL_RenderCopy(nativeRenderer, renderer.m_frameTexture, NULL, NULL);
 #else
     // Rendering
     SDL_SetRenderDrawColor(nativeRenderer, 12, 10, 40, 255);
@@ -473,7 +451,6 @@ int main(int argc, char** argv) {
                        player->debugColliderPoints(), player->bullets(),
                        player->bulletCount());
 #endif
-
     renderer.present();
 
     //SDL_Delay(1);  // Almost no delayed

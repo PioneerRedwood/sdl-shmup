@@ -367,21 +367,6 @@ int main(int argc, char** argv) {
     renderer.flush();
     drawPlayer(renderer, *player);
 #elif DRAW_PIXELS_ONCE
-    SDL_Texture* tempTex = renderer.m_frameTexture;
-    void* pixels = {};
-    int pitch = {};
-    if(SDL_LockTexture(tempTex, NULL, &pixels, &pitch) != 0) {
-      std::cout << "drawEnemies retrieving texture pixel data failed " << SDL_GetError() << std::endl;
-      return 1;
-    }
-
-    if(SDL_RenderReadPixels(nativeRenderer, NULL, SDL_PIXELFORMAT_BGRA32, pixels, pitch) != 0) {
-      std::cout << "drawEnemies reading pixel data failed " << SDL_GetError() << std::endl;
-      return 1;
-    }
-
-    renderer.m_tempFrameBuffer = (shmup::RGBA*)pixels;
-
     // 배경 그리기
     const shmup::RGBA spaceColor = { 12, 10, 40, 255 };
     renderer.clearColor(spaceColor);
@@ -431,7 +416,10 @@ int main(int argc, char** argv) {
 
       renderer.renderPixels(tgaPixels, rect);
     }
-    SDL_UnlockTexture(renderer.m_frameTexture);
+    
+    SDL_RenderClear(nativeRenderer);
+    SDL_UpdateTexture(renderer.m_frameTexture, nullptr, renderer.m_screenBuffer, 
+                      program->width() * sizeof(shmup::RGBA));
     SDL_RenderCopy(nativeRenderer, renderer.m_frameTexture, NULL, NULL);
 #else
     // Rendering

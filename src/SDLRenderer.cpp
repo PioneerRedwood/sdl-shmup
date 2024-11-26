@@ -46,13 +46,12 @@ bool SDLRenderer::init(SDL_Window* window, int w, int h) {
   stride = width;
   maxOffset = stride * height - 1;
 
-  // m_tempFrameBuffer = new RGBA[w * h];
-  // if(m_tempFrameBuffer == nullptr) {
-  //   return false;
-  // }
+  m_screenBuffer = new RGBA[w * h];
+  if(m_screenBuffer == nullptr) {
+    return false;
+  }
 
-//  m_frameTexture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA8888, 
-  m_frameTexture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_BGRA32, 
+  m_frameTexture = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_BGRA32,
                                      SDL_TEXTUREACCESS_STREAMING, w, h);
   if(m_frameTexture == nullptr) {
     return false;
@@ -158,7 +157,7 @@ void SDLRenderer::clearColor(RGBA color) {
   for(int y = 0; y < height; ++y) {
     for(int x = 0; x < width; ++x) {
       int offset = y * width + x;
-      m_tempFrameBuffer[offset] = { color.b, color.g, color.r, color.a };
+        m_screenBuffer[offset] = { color.b, color.g, color.r, color.a };
     }
   }
 }
@@ -174,7 +173,7 @@ void SDLRenderer::clearColor(RGBA color) {
   +---------------+
 */
 void SDLRenderer::renderPixels(const RGBA* src, const SDL_FRect& rect) {
-  if(m_tempFrameBuffer == nullptr) return;
+  if(m_screenBuffer == nullptr) return;
 
   const int dstStart = (int)rect.y * stride + (int)rect.x;
   int srcOffset = 0, dstOffset = 0;
@@ -186,7 +185,7 @@ void SDLRenderer::renderPixels(const RGBA* src, const SDL_FRect& rect) {
 
       if(dstOffset < 0 || dstOffset > maxOffset) { break; }
 
-      RGBA& dest = m_tempFrameBuffer[dstOffset];
+      RGBA& dest = m_screenBuffer[dstOffset];
       dest = Blend::alpha(src[srcOffset], dest);
     }
   }

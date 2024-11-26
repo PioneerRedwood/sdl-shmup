@@ -48,7 +48,7 @@ class SDLRenderer {
 
   void flush();
 
-  RGBA* m_tempFrameBuffer = nullptr;
+  RGBA* m_screenBuffer = nullptr;
   
   SDL_Texture* m_frameTexture = nullptr;
 

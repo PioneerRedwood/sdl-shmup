@@ -36,6 +36,10 @@ bool SDLProgram::init(int x, int y, int width, int height) {
   if (m_window == nullptr) {
     std::cout << "SDL_CreateWindow failed error: " << SDL_GetError() << std::endl;
     return false;
+  } else {
+    int w, h;
+    SDL_GetWindowSize(m_window, &w, &h);
+    std::cout << "SDL_GetWindowSize w: " << w << "h: " << h << "\n";
   }
 
   m_renderer = new SDLRenderer();
